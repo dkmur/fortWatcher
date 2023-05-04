@@ -28,7 +28,11 @@ if [[ -z $fence ]] ;then
 else
   webhook=$(query "select webhook from webhooks where fence='$fence';")
 fi
-map_urll=$(echo $map_url | sed "s/\(.*\/\/\)\(.*\)/\1$subdomain.\2/g")
+if [[ -z $subdomain ]] ;then
+   map_urll=$map_url
+else
+  map_urll=$(echo $map_url | sed "s/\(.*\/\/\)\(.*\)/\1$subdomain.\2/g")
+fi
 }
 
 get_address(){
