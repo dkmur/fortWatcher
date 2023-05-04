@@ -115,7 +115,7 @@ while true ;do
       get_monfence
       get_address
       get_staticmap
-      echo $line | jq >> $folder/logs/stops.log
+#      echo $line | jq >> $folder/logs/stops.log
       echo "[$(date '+%Y%m%d %H:%M:%S')] edit $type. Fence=$fence " >> $folder/logs/stops.log
       if [[ ! -z $webhook ]] ;then
         if [[ $oldname != $name ]] ;then
