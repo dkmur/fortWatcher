@@ -19,7 +19,7 @@ fi
 
 get_monfence(){
 fence=""
-hook=""
+webhook=""
 fence=$(query "select fence from geofences where ST_CONTAINS(st, point($lat,$lon)) and type='mon';")
 if [[ -z $fence ]] ;then
   webhook=$unfenced_webhook
@@ -29,7 +29,7 @@ fi
 }
 
 get_address(){
-if [[ ! -z $nominatim_url ]] ;then
+if [[ ! -z $nominatim_url && ! -z $webhook ]] ;then
   address=$(curl -s "$nominatim_url/reverse?format=jsonv2&lat=$lat&lon=$lon" | jq -r '.address.road + " " + .address.house_number + ", " + .address.town')
 fi
 }
@@ -42,7 +42,7 @@ query "CREATE TABLE IF NOT EXISTS webhooks (area varchar(40) NOT NULL,fence varc
 # start receiver and process
 while true ;do
   while read -r line ;do
-    echo $line | jq >> $folder/logs/stops.log
+#    echo $line | jq >> $folder/logs/stops.log
     change_type=$(echo $line| jq -r '.change_type')
 
     if [[ $change_type == "removal" ]] ;then
@@ -69,7 +69,7 @@ while true ;do
       get_address
       echo "[$(date '+%Y%m%d %H:%M:%S')] added $type \"$name\", id=$id at $lat,$lon. Fence=$fence" >> $folder/logs/stops.log
       if [[ ! -z $webhook ]] ;then
-        cd $folder && ./discord.sh --username "$change_type $type" --color "65280" --avatar "https://i.imgur.com/I4s5Z43.png" --thumbnail "$image_url" --webhook-url "$webhook" --description "Name: $name\nLocation: $lat,$lon\nFence: $fence"
+        cd $folder && ./discord.sh --username "$change_type $type" --color "65280" --avatar "https://i.imgur.com/I4s5Z43.png" --thumbnail "$image_url" --webhook-url "$webhook" --description "Name: $name\nLocation: $lat,$lon\nFence: $fence\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [$map_name]($map_url/@/$lat/$lon/16)"
       fi
     elif [[ $change_type == "edit" ]] ;then
       edit_types=$(echo $line| jq -r '.edit_types')
@@ -91,9 +91,9 @@ while true ;do
       echo "[$(date '+%Y%m%d %H:%M:%S')] edit $type. Fence=$fence " >> $folder/logs/stops.log
       if [[ ! -z $webhook ]] ;then
         if [[ $oldname != $name ]] ;then
-          cd $folder && ./discord.sh --username "$change_type $type" --color "15237395" --avatar "https://i.imgur.com/I4s5Z43.png" --thumbnail "$image_url" --webhook-url "$webhook" --description "Old name: $oldname\nNew name: $name\nLocation: $lat,$lon\nFence: $fence"
+          cd $folder && ./discord.sh --username "$change_type $type" --color "15237395" --avatar "https://i.imgur.com/I4s5Z43.png" --thumbnail "$image_url" --webhook-url "$webhook" --description "Old name: $oldname\nNew name: $name\nLocation: $lat,$lon\nFence: $fence\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [$map_name]($map_url/@/$lat/$lon/16)"
         elif [[ $oldlat != $lat || $oldlon != $lon ]] ;then
-          cd $folder && ./discord.sh --username "$change_type $type" --color "15237395" --avatar "https://i.imgur.com/I4s5Z43.png" --thumbnail "$image_url" --webhook-url "$webhook" --description "Name: $name\nOld location: $oldlat,$oldlon\nNew location: $lat,$lon\nFence: $fence"
+          cd $folder && ./discord.sh --username "$change_type $type" --color "15237395" --avatar "https://i.imgur.com/I4s5Z43.png" --thumbnail "$image_url" --webhook-url "$webhook" --description "Name: $name\nOld location: $oldlat,$oldlon\nNew location: $lat,$lon\nFence: $fence\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [$map_name]($map_url/@/$lat/$lon/16)"
         fi
       fi
     else
