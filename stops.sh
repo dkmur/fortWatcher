@@ -73,7 +73,15 @@ while true ;do
       id=$(echo $line| jq -r '.new.id')
       type=$(echo $line| jq -r '.new.type')
       name=$(echo $line| jq -r '.new.name')
+      if [[ $name == "null" ]] ;then
+        name="Unknown"
+      fi
       image_url=$(echo $line| jq -r '.new.image_url')
+      if [[ $image_url == "null" && type == "pokestop" ]] ;then
+        image_url="https://raw.githubusercontent.com/nileplumb/PkmnHomeIcons/master/UICONS/pokestop/0.png"
+      else
+        image_url="https://raw.githubusercontent.com/nileplumb/PkmnHomeIcons/master/UICONS/gym/0.png"
+      fi
       lat=$(echo $line| jq -r '.new.location.lat')
       lon=$(echo $line| jq -r '.new.location.lon')
       get_monfence
@@ -107,6 +115,8 @@ while true ;do
           cd $folder && ./discord.sh --username "$change_type $type" --color "15237395" --avatar "https://i.imgur.com/I4s5Z43.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --description "Old name: $oldname\nNew name: $name\nLocation: $lat,$lon\nFence: $fence\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [$map_name]($map_url/@/$lat/$lon/16)"
         elif [[ $oldlat != $lat || $oldlon != $lon ]] ;then
           cd $folder && ./discord.sh --username "$change_type $type" --color "15237395" --avatar "https://i.imgur.com/I4s5Z43.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --description "Name: $name\nOld location: $oldlat,$oldlon\nNew location: $lat,$lon\nFence: $fence\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [$map_name]($map_url/@/$lat/$lon/16)"
+        elif [[ $oldtype != $type ]] ;then
+         cd $folder && ./discord.sh --username "$oldtype => $type" --color "15237395" --avatar "https://i.imgur.com/I4s5Z43.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --description "Name: $name\nOld type: $oldtype\nNew type: $type\nFence: $fence\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [$map_name]($map_url/@/$lat/$lon/16)"
         fi
       fi
     else
