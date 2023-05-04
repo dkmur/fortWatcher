@@ -30,7 +30,7 @@ fi
 
 get_address(){
 if [[ ! -z $nominatim_url && ! -z $webhook ]] ;then
-  address=$(curl -s "$nominatim_url/reverse?format=jsonv2&lat=$lat&lon=$lon" | jq -r '.address.road + " " + .address.house_number + ", " + .address.town + .address.village')
+  address=$(curl -s "$nominatim_url/reverse?format=jsonv2&lat=$lat&lon=$lon" | jq -r '.address.road + " " + .address.house_number + ", " + .address.town + .address.village + .address.city')
 fi
 }
 
