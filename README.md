@@ -1,6 +1,6 @@
 # fortWatcher
 
-WIP
+WIP  
 check Golbat fort change webhook against blisseydb mon area fences and send discord notification 
 
 - install jq

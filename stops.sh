@@ -93,13 +93,16 @@ while true ;do
       fi
     elif [[ $change_type == "edit" ]] ;then
       edit_types=$(echo $line| jq -r '.edit_types')
-      oldid=$(echo $line| jq -r '.old.id')
+#      oldid=$(echo $line| jq -r '.old.id')
       oldtype=$(echo $line| jq -r '.old.type')
       oldname=$(echo $line| jq -r '.old.name')
-      oldimage_url=$(echo $line| jq -r '.old.image_url')
+      if [[ $oldname == "null" ]] ;then
+        oldname="Unknown"
+      fi
+#      oldimage_url=$(echo $line| jq -r '.old.image_url')
       oldlat=$(echo $line| jq -r '.old.location.lat')
       oldlon=$(echo $line| jq -r '.old.location.lon')
-      id=$(echo $line| jq -r '.new.id')
+#      id=$(echo $line| jq -r '.new.id')
       type=$(echo $line| jq -r '.new.type')
       name=$(echo $line| jq -r '.new.name')
       image_url=$(echo $line| jq -r '.new.image_url')
