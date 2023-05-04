@@ -77,7 +77,7 @@ while true ;do
         name="Unknown"
       fi
       image_url=$(echo $line| jq -r '.new.image_url')
-      if [[ $image_url == "null" && type == "pokestop" ]] ;then
+      if [[ $image_url == "null" && $type == "pokestop" ]] ;then
         image_url="https://raw.githubusercontent.com/nileplumb/PkmnShuffleMap/master/UICONS/pokestop/0.png"
       else
         image_url="https://raw.githubusercontent.com/nileplumb/PkmnShuffleMap/master/UICONS/gym/0.png"
