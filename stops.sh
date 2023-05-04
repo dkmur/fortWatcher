@@ -37,9 +37,9 @@ fi
 get_staticmap(){
 if [[ ! -z $tileserver_url && ! -z $webhook ]] ;then
   if [[ $type == "pokestop" ]] ;then
-    pregen=$(curl -s "$tileserver_url/staticmap/pokemon?lat=$lat&lon=$lon&img=https://raw.githubusercontent.com/nileplumb/PkmnHomeIcons/master/UICONS/pokestop/0.png&pregenerate=true")
+    pregen=$(curl -s "$tileserver_url/staticmap/pokemon?lat=$lat&lon=$lon&img=https://raw.githubusercontent.com/nileplumb/PkmnShuffleMap/master/UICONS/pokestop/0.png&pregenerate=true")
   else
-    pregen=$(curl -s "$tileserver_url/staticmap/pokemon?lat=$lat&lon=$lon&img=https://raw.githubusercontent.com/nileplumb/PkmnHomeIcons/master/UICONS/gym/0.png&pregenerate=true")
+    pregen=$(curl -s "$tileserver_url/staticmap/pokemon?lat=$lat&lon=$lon&img=https://raw.githubusercontent.com/nileplumb/PkmnShuffleMap/master/UICONS/gym/0.png&pregenerate=true")
   fi
 fi
 }
@@ -78,9 +78,9 @@ while true ;do
       fi
       image_url=$(echo $line| jq -r '.new.image_url')
       if [[ $image_url == "null" && type == "pokestop" ]] ;then
-        image_url="https://raw.githubusercontent.com/nileplumb/PkmnHomeIcons/master/UICONS/pokestop/0.png"
+        image_url="https://raw.githubusercontent.com/nileplumb/PkmnShuffleMap/master/UICONS/pokestop/0.png"
       else
-        image_url="https://raw.githubusercontent.com/nileplumb/PkmnHomeIcons/master/UICONS/gym/0.png"
+        image_url="https://raw.githubusercontent.com/nileplumb/PkmnShuffleMap/master/UICONS/gym/0.png"
       fi
       lat=$(echo $line| jq -r '.new.location.lat')
       lon=$(echo $line| jq -r '.new.location.lon')
