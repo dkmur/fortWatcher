@@ -21,11 +21,13 @@ get_monfence(){
 fence=""
 webhook=""
 fence=$(query "select fence from geofences where ST_CONTAINS(st, point($lat,$lon)) and type='mon';")
+subdomain=$(query "select ifnull(subdomain,'') from webhooks where fence='$fence';")
 if [[ -z $fence ]] ;then
   webhook=$unfenced_webhook
 else
   webhook=$(query "select webhook from webhooks where fence='$fence';")
 fi
+map_url=$(echo $map_url | sed "s/\(.*\/\/\)\(.*\)/\1$subdomain.\2/g")
 }
 
 get_address(){
@@ -47,7 +49,9 @@ fi
 ## execution
 
 # create table
-query "CREATE TABLE IF NOT EXISTS webhooks (area varchar(40) NOT NULL,fence varchar(40) DEFAULT Area,webhook varchar(150)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+query "CREATE TABLE IF NOT EXISTS webhooks (area varchar(40) NOT NULL,fence varchar(40) DEFAULT Area,webhook varchar(150),subdomain varchar(20)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+# table updates
+query "alter table webhooks add column if not exists subdomain varchar(20);"
 
 # start receiver and process
 while true ;do
