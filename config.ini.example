@@ -8,3 +8,8 @@ blisseydb=chansey
 ## fortWatcher
 receiver_port=
 unfenced_webhook=""
+
+## more
+map_name=MyMap
+map_url="https://mymap.com"
+nominatim_url=""

@@ -28,14 +28,21 @@ else
 fi
 }
 
+get_address(){
+if [[ ! -z $nominatim_url ]] ;then
+  address=$(curl -s "$nominatim_url/reverse?format=jsonv2&lat=$lat&lon=$lon" | jq -r '.address.road + " " + .address.house_number + ", " + .address.town')
+fi
+}
+
 ## execution
 
 # create table
-query "CREATE TABLE IF NOT EXISTS `webhooks` (`area` varchar(40) NOT NULL,`fence` varchar(40) DEFAULT `Area`,`webhook` varchar(150)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+query "CREATE TABLE IF NOT EXISTS webhooks (area varchar(40) NOT NULL,fence varchar(40) DEFAULT Area,webhook varchar(150)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
 
 # start receiver and process
 while true ;do
   while read -r line ;do
+    echo $line | jq >> $folder/logs/stops.log
     change_type=$(echo $line| jq -r '.change_type')
 
     if [[ $change_type == "removal" ]] ;then
@@ -46,9 +53,10 @@ while true ;do
       lat=$(echo $line| jq -r '.old.location.lat')
       lon=$(echo $line| jq -r '.old.location.lon')
       get_monfence
+      get_address
       echo "[$(date '+%Y%m%d %H:%M:%S')] removed $type \"$name\", id=$id at $lat,$lon. Fence=$fence" >> $folder/logs/stops.log
       if [[ ! -z $webhook ]] ;then
-        cd $folder && ./discord.sh --username "$change_type $type" --color "16711680" --avatar "https://i.imgur.com/I4s5Z43.png" --thumbnail "$image_url" --webhook-url "$webhook" --description "Name: $name\nLocation: $lat,$lon\nFence: $fence"
+        cd $folder && ./discord.sh --username "$change_type $type" --color "16711680" --avatar "https://i.imgur.com/I4s5Z43.png" --thumbnail "$image_url" --webhook-url "$webhook" --description "Name: $name\nLocation: $lat,$lon\nFence: $fence\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [$map_name]($map_url/@/$lat/$lon/16)"
       fi
     elif [[ $change_type == "new" ]] ;then
       id=$(echo $line| jq -r '.new.id')
@@ -58,6 +66,7 @@ while true ;do
       lat=$(echo $line| jq -r '.new.location.lat')
       lon=$(echo $line| jq -r '.new.location.lon')
       get_monfence
+      get_address
       echo "[$(date '+%Y%m%d %H:%M:%S')] added $type \"$name\", id=$id at $lat,$lon. Fence=$fence" >> $folder/logs/stops.log
       if [[ ! -z $webhook ]] ;then
         cd $folder && ./discord.sh --username "$change_type $type" --color "65280" --avatar "https://i.imgur.com/I4s5Z43.png" --thumbnail "$image_url" --webhook-url "$webhook" --description "Name: $name\nLocation: $lat,$lon\nFence: $fence"
@@ -77,6 +86,7 @@ while true ;do
       lat=$(echo $line| jq -r '.new.location.lat')
       lon=$(echo $line| jq -r '.new.location.lon')
       get_monfence
+      get_address
       echo $line | jq >> $folder/logs/stops.log
       echo "[$(date '+%Y%m%d %H:%M:%S')] edit $type. Fence=$fence " >> $folder/logs/stops.log
       if [[ ! -z $webhook ]] ;then
