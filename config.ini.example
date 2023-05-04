@@ -13,3 +13,4 @@ unfenced_webhook=""
 map_name=MyMap
 map_url="https://mymap.com"
 nominatim_url=""
+tileserver_url=""
