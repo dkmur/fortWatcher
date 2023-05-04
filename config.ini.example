@@ -1,0 +1,10 @@
+## Database settings ##
+sqluser=
+sqlpass=
+dbip=127.0.0.1
+dbport=3306
+blisseydb=chansey
+
+## fortWatcher
+receiver_port=
+unfenced_webhook=""
