@@ -20,11 +20,19 @@ fi
 get_monfence(){
 fence=""
 webhook=""
+map_urll=""
 fence=$(query "select fence from geofences where ST_CONTAINS(st, point($lat,$lon)) and type='mon';")
-if [[ -z $fence ]] ;then
-  webhook=$unfenced_webhook
-else
+subdomain=$(query "select ifnull(subdomain,'') from webhooks where fence='$fence';")
+if [[ ! -z $fence ]] ;then
   webhook=$(query "select webhook from webhooks where fence='$fence';")
+else
+  webhook=$unfenced_webhook
+  fence="unfenced"
+fi
+if [[ -z $subdomain ]] ;then
+   map_urll=$map_url
+else
+  map_urll=$(echo $map_url | sed "s/\(.*\/\/\)\(.*\)/\1$subdomain.\2/g")
 fi
 }
 
@@ -47,7 +55,9 @@ fi
 ## execution
 
 # create table
-query "CREATE TABLE IF NOT EXISTS webhooks (area varchar(40) NOT NULL,fence varchar(40) DEFAULT Area,webhook varchar(150)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+query "CREATE TABLE IF NOT EXISTS webhooks (area varchar(40) NOT NULL,fence varchar(40) DEFAULT Area,webhook varchar(150),subdomain varchar(20)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+# table updates
+query "alter table webhooks add column if not exists subdomain varchar(20);"
 
 # start receiver and process
 while true ;do
@@ -60,14 +70,14 @@ while true ;do
       type=$(echo $line| jq -r '.old.type')
       name=$(echo $line| jq -r '.old.name')
       image_url=$(echo $line| jq -r '.old.image_url')
-      lat=$(echo $line| jq -r '.old.location.lat')
-      lon=$(echo $line| jq -r '.old.location.lon')
+      lat=$(echo $line| jq -r '.old.location.lat' | xargs printf "%.*f\n" 6)
+      lon=$(echo $line| jq -r '.old.location.lon' | xargs printf "%.*f\n" 6)
       get_monfence
       get_address
       get_staticmap
-      echo "[$(date '+%Y%m%d %H:%M:%S')] removed $type \"$name\", id=$id at $lat,$lon. Fence=$fence" >> $folder/logs/stops.log
+      echo "[$(date '+%Y%m%d %H:%M:%S')] removed $type id: $id location: $lat,$lon fence: $fence name: \"$name\"" >> $folder/logs/stops.log
       if [[ ! -z $webhook ]] ;then
-        cd $folder && ./discord.sh --username "$change_type $type" --color "16711680" --avatar "https://i.imgur.com/I4s5Z43.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --description "Name: $name\nLocation: $lat,$lon\nFence: $fence\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_url/@/$lat/$lon/16)"
+        cd $folder && ./discord.sh --username "$change_type $type" --color "16711680" --avatar "https://i.imgur.com/I4s5Z43.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --footer "Fence: $fence Location: $lat,$lon" --description "Name: $name\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)"
       fi
     elif [[ $change_type == "new" ]] ;then
       id=$(echo $line| jq -r '.new.id')
@@ -82,14 +92,14 @@ while true ;do
       else
         image_url="https://raw.githubusercontent.com/nileplumb/PkmnShuffleMap/master/UICONS/gym/0.png"
       fi
-      lat=$(echo $line| jq -r '.new.location.lat')
-      lon=$(echo $line| jq -r '.new.location.lon')
+      lat=$(echo $line| jq -r '.new.location.lat' | xargs printf "%.*f\n" 6)
+      lon=$(echo $line| jq -r '.new.location.lon' | xargs printf "%.*f\n" 6)
       get_monfence
       get_address
       get_staticmap
-      echo "[$(date '+%Y%m%d %H:%M:%S')] added $type \"$name\", id=$id at $lat,$lon. Fence=$fence" >> $folder/logs/stops.log
+      echo "[$(date '+%Y%m%d %H:%M:%S')] added $type id: $id location: $lat,$lon fence: $fence name: \"$name\"" >> $folder/logs/stops.log
       if [[ ! -z $webhook ]] ;then
-        cd $folder && ./discord.sh --username "$change_type $type" --color "65280" --avatar "https://i.imgur.com/I4s5Z43.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --description "Name: $name\nLocation: $lat,$lon\nFence: $fence\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_url/@/$lat/$lon/16)"
+        cd $folder && ./discord.sh --username "$change_type $type" --color "65280" --avatar "https://i.imgur.com/I4s5Z43.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --footer "Fence: $fence Location: $lat,$lon" --description "Name: $name\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)"
       fi
     elif [[ $change_type == "edit" ]] ;then
       edit_types=$(echo $line| jq -r '.edit_types')
@@ -100,26 +110,26 @@ while true ;do
         oldname="Unknown"
       fi
 #      oldimage_url=$(echo $line| jq -r '.old.image_url')
-      oldlat=$(echo $line| jq -r '.old.location.lat')
-      oldlon=$(echo $line| jq -r '.old.location.lon')
-#      id=$(echo $line| jq -r '.new.id')
+      oldlat=$(echo $line| jq -r '.old.location.lat' | xargs printf "%.*f\n" 6)
+      oldlon=$(echo $line| jq -r '.old.location.lon' | xargs printf "%.*f\n" 6)
+      id=$(echo $line| jq -r '.new.id')
       type=$(echo $line| jq -r '.new.type')
       name=$(echo $line| jq -r '.new.name')
       image_url=$(echo $line| jq -r '.new.image_url')
-      lat=$(echo $line| jq -r '.new.location.lat')
-      lon=$(echo $line| jq -r '.new.location.lon')
+      lat=$(echo $line| jq -r '.new.location.lat' | xargs printf "%.*f\n" 6)
+      lon=$(echo $line| jq -r '.new.location.lon' | xargs printf "%.*f\n" 6)
       get_monfence
       get_address
       get_staticmap
-      echo $line | jq >> $folder/logs/stops.log
-      echo "[$(date '+%Y%m%d %H:%M:%S')] edit $type. Fence=$fence " >> $folder/logs/stops.log
+#      echo $line | jq >> $folder/logs/stops.log
+      echo "[$(date '+%Y%m%d %H:%M:%S')] edit $type id: $id fence: $fence name: \"$name\"" >> $folder/logs/stops.log
       if [[ ! -z $webhook ]] ;then
         if [[ $oldname != $name ]] ;then
-          cd $folder && ./discord.sh --username "$change_type $type" --color "15237395" --avatar "https://i.imgur.com/I4s5Z43.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --description "Old name: $oldname\nNew name: $name\nLocation: $lat,$lon\nFence: $fence\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_url/@/$lat/$lon/16)"
+          cd $folder && ./discord.sh --username "$change_type $type" --color "15237395" --avatar "https://i.imgur.com/I4s5Z43.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --footer "Fence: $fence Location: $lat,$lon" --description "Old name: $oldname\nNew name: $name\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)"
         elif [[ $oldlat != $lat || $oldlon != $lon ]] ;then
-          cd $folder && ./discord.sh --username "$change_type $type" --color "15237395" --avatar "https://i.imgur.com/I4s5Z43.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --description "Name: $name\nOld location: $oldlat,$oldlon\nNew location: $lat,$lon\nFence: $fence\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_url/@/$lat/$lon/16)"
+          cd $folder && ./discord.sh --username "$change_type $type" --color "15237395" --avatar "https://i.imgur.com/I4s5Z43.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --footer "Fence: $fence Location: $lat,$lon" --description "Name: $name\nOld location: $oldlat,$oldlon\nNew location: $lat,$lon\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)"
         elif [[ $oldtype != $type ]] ;then
-         cd $folder && ./discord.sh --username "$oldtype => $type" --color "15237395" --avatar "https://i.imgur.com/I4s5Z43.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --description "Name: $name\nOld type: $oldtype\nNew type: $type\nFence: $fence\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_url/@/$lat/$lon/16)"
+         cd $folder && ./discord.sh --username "$oldtype => $type" --color "15237395" --avatar "https://i.imgur.com/I4s5Z43.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --footer "Fence: $fence Location: $lat,$lon" --description "Name: $name\nOld type: $oldtype\nNew type: $type\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)"
         fi
       fi
     else
@@ -127,5 +137,5 @@ while true ;do
       echo $line | jq >> $folder/logs/stops.log
     fi
 
-  done < <(netcat -l $receiver_port < response.txt | grep { | jq -c '.[] | .message')
+  done < <(ncat -l $receiver_port < response.txt | grep { | jq -c '.[] | .message')
 done
