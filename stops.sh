@@ -69,8 +69,8 @@ while true ;do
       type=$(echo $line| jq -r '.old.type')
       name=$(echo $line| jq -r '.old.name')
       image_url=$(echo $line| jq -r '.old.image_url')
-      lat=$(echo $line| jq -r '.old.location.lat')
-      lon=$(echo $line| jq -r '.old.location.lon')
+      lat=$(echo $line| jq -r '.old.location.lat' | xargs printf "%.*f\n" 6)
+      lon=$(echo $line| jq -r '.old.location.lon' | xargs printf "%.*f\n" 6)
       get_monfence
       get_address
       get_staticmap
@@ -91,8 +91,8 @@ while true ;do
       else
         image_url="https://raw.githubusercontent.com/nileplumb/PkmnShuffleMap/master/UICONS/gym/0.png"
       fi
-      lat=$(echo $line| jq -r '.new.location.lat')
-      lon=$(echo $line| jq -r '.new.location.lon')
+      lat=$(echo $line| jq -r '.new.location.lat' | xargs printf "%.*f\n" 6)
+      lon=$(echo $line| jq -r '.new.location.lon' | xargs printf "%.*f\n" 6)
       get_monfence
       get_address
       get_staticmap
@@ -109,14 +109,14 @@ while true ;do
         oldname="Unknown"
       fi
 #      oldimage_url=$(echo $line| jq -r '.old.image_url')
-      oldlat=$(echo $line| jq -r '.old.location.lat')
-      oldlon=$(echo $line| jq -r '.old.location.lon')
+      oldlat=$(echo $line| jq -r '.old.location.lat' | xargs printf "%.*f\n" 6)
+      oldlon=$(echo $line| jq -r '.old.location.lon' | xargs printf "%.*f\n" 6)
 #      id=$(echo $line| jq -r '.new.id')
       type=$(echo $line| jq -r '.new.type')
       name=$(echo $line| jq -r '.new.name')
       image_url=$(echo $line| jq -r '.new.image_url')
-      lat=$(echo $line| jq -r '.new.location.lat')
-      lon=$(echo $line| jq -r '.new.location.lon')
+      lat=$(echo $line| jq -r '.new.location.lat' | xargs printf "%.*f\n" 6)
+      lon=$(echo $line| jq -r '.new.location.lon' | xargs printf "%.*f\n" 6)
       get_monfence
       get_address
       get_staticmap
