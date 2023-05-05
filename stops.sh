@@ -136,5 +136,5 @@ while true ;do
       echo $line | jq >> $folder/logs/stops.log
     fi
 
-  done < <(netcat -l $receiver_port < response.txt | grep { | jq -c '.[] | .message')
+  done < <(ncat -l $receiver_port < response.txt | grep { | jq -c '.[] | .message')
 done

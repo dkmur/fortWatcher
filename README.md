@@ -4,7 +4,7 @@ WIP
 check Golbat fort_update webhook against blisseydb mon area fences and send discord notification 
 
 - install jq
-- install netcat
+- install ncat
 - copy config and fill it out
 - add golbat webhook:  
 ```
