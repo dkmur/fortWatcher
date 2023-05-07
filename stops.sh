@@ -3,8 +3,13 @@
 folder="$(pwd)"
 source $folder/config.ini
 
-# Logging
+## Logging
 mkdir -p $folder/logs
+# log start
+echo "[$(date '+%Y%m%d %H:%M:%S')] fortwatcher (re)started" >> $folder/logs/stops.log
+# stderr to logfile
+exec 2>> $folder/logs/stops.log
+
 
 ## functions
 if [[ -z $sqlpass ]] ;then
