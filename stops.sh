@@ -127,13 +127,16 @@ while true ;do
       get_address
       get_staticmap
 #      echo $line | jq >> $folder/logs/stops.log
-      echo "[$(date '+%Y%m%d %H:%M:%S')] edit $type id: $id fence: $fence name: \"$name\"" >> $folder/logs/stops.log
+#      echo "[$(date '+%Y%m%d %H:%M:%S')] edit $type id: $id fence: $fence name: \"$name\"" >> $folder/logs/stops.log
       if [[ ! -z $webhook ]] ;then
         if [[ $oldname != $name ]] ;then
+          echo "[$(date '+%Y%m%d %H:%M:%S')] edit $type name id: $id fence: $fence name: \"$name\" oldname: \"$oldname\"" >> $folder/logs/stops.log
           cd $folder && ./discord.sh --username "$change_type $type" --color "15237395" --avatar "https://i.imgur.com/I4s5Z43.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --footer "Fence: $fence Location: $lat,$lon" --description "Old name: $oldname\nNew name: $name\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)"
         elif [[ $oldlat != $lat || $oldlon != $lon ]] ;then
+          echo "[$(date '+%Y%m%d %H:%M:%S')] edit $type location id: $id fence: $fence name: \"$name\" oldloc: $oldlat,$oldlon" >> $folder/logs/stops.log
           cd $folder && ./discord.sh --username "$change_type $type" --color "15237395" --avatar "https://i.imgur.com/I4s5Z43.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --footer "Fence: $fence Location: $lat,$lon" --description "Name: $name\nOld location: $oldlat,$oldlon\nNew location: $lat,$lon\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)"
         elif [[ $oldtype != $type ]] ;then
+          echo "[$(date '+%Y%m%d %H:%M:%S')] edit $oldtype conversion name id: $id fence: $fence name: \"$name\" newtype: $type" >> $folder/logs/stops.log
          cd $folder && ./discord.sh --username "$oldtype => $type" --color "15237395" --avatar "https://i.imgur.com/I4s5Z43.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --footer "Fence: $fence Location: $lat,$lon" --description "Name: $name\nOld type: $oldtype\nNew type: $type\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)"
         fi
       fi
