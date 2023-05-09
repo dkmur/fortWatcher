@@ -1,10 +1,11 @@
 # fortWatcher
 
-![image](https://user-images.githubusercontent.com/42545952/236547512-8ad0ebb1-043d-41e5-a09a-4df3f2402eeb.png)
+![image](https://github.com/dkmur/fortWatcher/assets/42545952/55687bb8-ff41-411e-88f8-7c1be933d670)
 
 
-WIP  
-check Golbat fort_update webhook against blisseydb mon area fences and send discord notification 
+
+Webhook receiver for Golbat(fort_update) and intelwatcher(new portals).  
+Updates will be mapped to blisseydb mon area fences and discord notification send.
 
 - install jq
 - install ncat
