@@ -37,7 +37,11 @@ fi
 if [[ -z $subdomain ]] ;then
    map_urll=$map_url
 else
-  map_urll=$(echo $map_url | sed "s/\(.*\/\/\)\(.*\)/\1$subdomain.\2/g")
+  if [[ $subdomain != http* ]] ;then
+    map_urll=$(echo $map_url | sed "s/\(.*\/\/\)\(.*\)/\1$subdomain.\2/g")
+  else
+    map_urll=$subdomain
+  fi
 fi
 }
 
@@ -65,7 +69,7 @@ fi
 # create table
 query "CREATE TABLE IF NOT EXISTS webhooks (area varchar(40) NOT NULL,fence varchar(40) DEFAULT Area,webhook varchar(150),subdomain varchar(20)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
 # table updates
-query "alter table webhooks add column if not exists subdomain varchar(20);"
+query "alter table webhooks add column if not exists subdomain varchar(40);"
 
 # start receiver and process
 while true ;do
