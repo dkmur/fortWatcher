@@ -23,6 +23,7 @@ else
 fi
 
 get_monfence(){
+if [[ $timing == "true" ]] ;then sqlstart=$(date '+%Y%m%d %H:%M:%S.%3N') ;fi
 fence=""
 webhook=""
 map_urll=""
@@ -43,38 +44,46 @@ else
     map_urll=$subdomain
   fi
 fi
+if [[ $timing == "true" ]] ;then
+  sqlstop=$(date '+%Y%m%d %H:%M:%S.%3N')
+  sqldiff=$(date -d "$sqlstop $(date -d "$sqlstart" +%s.%N) seconds ago" +%s.%3N)
+fi
 }
 
 get_address(){
 if [[ ! -z $nominatim_url && ! -z $webhook ]] ;then
+  if [[ $timing == "true" ]] ;then nomstart=$(date '+%Y%m%d %H:%M:%S.%3N') ;fi
   address=$(curl -s "$nominatim_url/reverse?format=jsonv2&lat=$lat&lon=$lon" | jq -r '.address.road + " " + .address.house_number + ", " + .address.town + .address.village + .address.city')
+  if [[ $timing == "true" ]] ;then
+    nomstop=$(date '+%Y%m%d %H:%M:%S.%3N')
+    nomdiff=$(date -d "$nomstop $(date -d "$nomstart" +%s.%N) seconds ago" +%s.%3N)
+  fi
 fi
 }
 
 get_staticmap(){
 if [[ ! -z $tileserver_url && ! -z $webhook ]] ;then
+  if [[ $timing == "true" ]] ;then tilestart=$(date '+%Y%m%d %H:%M:%S.%3N') ;fi
   if [[ $type == "pokestop" ]] ;then
     pregen=$(curl -s "$tileserver_url/staticmap/pokemon?lat=$lat&lon=$lon&img=https://raw.githubusercontent.com/nileplumb/PkmnShuffleMap/master/UICONS/pokestop/0.png&pregenerate=true")
   elif [[ $type == "gym" ]] ;then
     pregen=$(curl -s "$tileserver_url/staticmap/pokemon?lat=$lat&lon=$lon&img=https://raw.githubusercontent.com/nileplumb/PkmnShuffleMap/master/UICONS/gym/0.png&pregenerate=true")
   else
     pregen=$(curl -s "$tileserver_url/staticmap/pokemon?lat=$lat&lon=$lon&img=https://i.imgur.com/vB3E31G.png&pregenerate=true")
-#    pregen=$(curl -s "$tileserver_url/staticmap/pokemon?lat=$lat&lon=$lon&img=https://raw.githubusercontent.com/nileplumb/PkmnShuffleMap/master/UICONS/spawnpoint/0.png&pregenerate=true")
+  fi
+  if [[ $timing == "true" ]] ;then
+    tilestop=$(date '+%Y%m%d %H:%M:%S.%3N')
+    tilediff=$(date -d "$tilestop $(date -d "$tilestart" +%s.%N) seconds ago" +%s.%3N)
   fi
 fi
 }
 
-## execution
-
-# create table
-query "CREATE TABLE IF NOT EXISTS webhooks (area varchar(40) NOT NULL,fence varchar(40) DEFAULT Area,webhook varchar(150),subdomain varchar(20)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
-# table updates
-query "alter table webhooks add column if not exists subdomain varchar(40);"
-
-# start receiver and process
-while true ;do
-  while read -r line ;do
-#    echo $line | jq >> $folder/logs/stops.log
+process(){
+for i in $1 ;do
+    if [[ $timing == "true" ]] ;then
+#      id=$(echo $line| jq -r 'if (.new.id | length > 0) then .new.id else .old.id end')
+      totstart=$(date '+%Y%m%d %H:%M:%S.%3N')
+    fi
     change_type=$(echo $line| jq -r '.change_type')
 
     if [[ $change_type == "removal" ]] ;then
@@ -89,7 +98,12 @@ while true ;do
       get_staticmap
       echo "[$(date '+%Y%m%d %H:%M:%S')] removed $type id: $id location: $lat,$lon fence: $fence name: \"$name\"" >> $folder/logs/stops.log
       if [[ ! -z $webhook ]] ;then
+        if [[ $timing == "true" ]] ;then hookstart=$(date '+%Y%m%d %H:%M:%S.%3N') ;fi
         cd $folder && ./discord.sh --username "${change_type^} ${type^}" --color "16711680" --avatar "https://cdn.discordapp.com/attachments/657164868969037824/1104477454313197578/770615.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --footer "Fence: $fence Location: $lat,$lon" --description "Name: **$name**\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)" >> $folder/logs/stops.log
+        if [[ $timing == "true" ]] ;then
+          hookstop=$(date '+%Y%m%d %H:%M:%S.%3N')
+          hookdiff=$(date -d "$hookstop $(date -d "$hookstart" +%s.%N) seconds ago" +%s.%3N)
+        fi
       fi
     elif [[ $change_type == "new" ]] ;then
       id=$(echo $line| jq -r '.new.id')
@@ -115,10 +129,15 @@ while true ;do
       get_staticmap
       echo "[$(date '+%Y%m%d %H:%M:%S')] added $type id: $id location: $lat,$lon fence: $fence name: \"$name\"" >> $folder/logs/stops.log
       if [[ ! -z $webhook ]] ;then
+        if [[ $timing == "true" ]] ;then hookstart=$(date '+%Y%m%d %H:%M:%S.%3N') ;fi
         if [[ $type == "portal" ]] ;then
           cd $folder && ./discord.sh --username "${change_type^} ${type^}" --color "12609532" --avatar "https://i.imgur.com/HwRhTBF.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --footer "Fence: $fence Location: $lat,$lon" --description "Name: $name\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)" >> $folder/logs/stops.log
         else
           cd $folder && ./discord.sh --username "${change_type^} ${type^}" --color "65280" --avatar "https://cdn.discordapp.com/attachments/657164868969037824/1104477454313197578/770615.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --footer "Fence: $fence Location: $lat,$lon" --description "Name: $name\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)" >> $folder/logs/stops.log
+        fi
+        if [[ $timing == "true" ]] ;then
+          hookstop=$(date '+%Y%m%d %H:%M:%S.%3N')
+          hookdiff=$(date -d "$hookstop $(date -d "$hookstart" +%s.%N) seconds ago" +%s.%3N)
         fi
       fi
     elif [[ $change_type == "edit" ]] ;then
@@ -144,6 +163,7 @@ while true ;do
 #      echo $line | jq >> $folder/logs/stops.log
 #      echo "[$(date '+%Y%m%d %H:%M:%S')] edit $type id: $id fence: $fence name: \"$name\"" >> $folder/logs/stops.log
       if [[ ! -z $webhook ]] ;then
+        if [[ $timing == "true" ]] ;then hookstart=$(date '+%Y%m%d %H:%M:%S.%3N') ;fi
         if [[ $oldname != $name ]] ;then
           echo "[$(date '+%Y%m%d %H:%M:%S')] edit $type name id: $id fence: $fence name: \"$name\" oldname: \"$oldname\"" >> $folder/logs/stops.log
           cd $folder && ./discord.sh --username "${type^} name change" --color "15237395" --avatar "https://cdn.discordapp.com/attachments/657164868969037824/1104477454313197578/770615.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --footer "Fence: $fence Location: $lat,$lon" --description "Old: $oldname\nNew: **$name**\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)" >> $folder/logs/stops.log
@@ -155,11 +175,34 @@ while true ;do
           echo "[$(date '+%Y%m%d %H:%M:%S')] edit oldtype conversion name id: $id fence: $fence name: \"$name\" newtype: $type" >> $folder/logs/stops.log
          cd $folder && ./discord.sh --username "Conversion" --color "15237395" --avatar "https://cdn.discordapp.com/attachments/657164868969037824/1104477454313197578/770615.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --footer "Fence: $fence Location: $lat,$lon" --description "Name: **$name**\nOld type: $oldtype\nNew type: **$type**\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)" >> $folder/logs/stops.log
         fi
+        if [[ $timing == "true" ]] ;then
+          hookstop=$(date '+%Y%m%d %H:%M:%S.%3N')
+          hookdiff=$(date -d "$hookstop $(date -d "$hookstart" +%s.%N) seconds ago" +%s.%3N)
+        fi
       fi
     else
       echo "THIS SHOULD NOT HAPPEN" >> $folder/logs/stops.log
       echo $line | jq >> $folder/logs/stops.log
     fi
+  if [[ $timing == "true" ]] ;then
+    totstop=$(date '+%Y%m%d %H:%M:%S.%3N')
+    totdiff=$(date -d "$totstop $(date -d "$totstart" +%s.%N) seconds ago" +%s.%3N)
+    echo "[$(date '+%Y%m%d %H:%M:%S.%3N')] $id Total $totdiff sql $sqldiff nominatim $nomdiff tileserver $tilediff webhook $hookdiff" >> $folder/logs/timing.log
+  fi
+done
+}
 
+## execution
+
+# create table
+query "CREATE TABLE IF NOT EXISTS webhooks (area varchar(40) NOT NULL,fence varchar(40) DEFAULT Area,webhook varchar(150),subdomain varchar(20)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+# table updates
+query "alter table webhooks add column if not exists subdomain varchar(40);"
+
+# start receiver and process
+while true ;do
+  if [[ $timing == "true" ]] ;then echo "[$(date '+%Y%m%d %H:%M:%S.%3N')] Main loop" >> $folder/logs/timing.log ;fi
+  while read -r line ;do
+    process $line &
   done < <(ncat -l $receiver_port < response.txt | grep { | jq -c '.[] | .message')
 done
