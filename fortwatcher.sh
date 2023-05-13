@@ -193,6 +193,15 @@ for i in $1 ;do
         fi
       else
         l1="noHook"
+        if [[ $oldname != $name ]] ;then
+          l2="edit $type name id: $id fence: $fence name: \"$name\" oldname: \"$oldname\""
+        elif [[ $oldlat != $lat || $oldlon != $lon ]] ;then
+          l2="edit $type location id: $id fence: $fence name: \"$name\" oldloc: $oldlat,$oldlon"
+        elif [[ $oldtype != $type ]] ;then
+          l2="edit oldtype conversion name id: $id fence: $fence name: \"$name\" newtype: $type"
+        else
+          l2="some edit, not name/location/type"
+        fi
       fi
     else
       echo "THIS SHOULD NOT HAPPEN" >> $folder/logs/fortwatcher.log
