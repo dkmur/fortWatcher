@@ -37,5 +37,5 @@ types = ["fort_update"]
     ]
 }
 ```
-- fire it up like `pm2 start stops.sh --name fortWatcher`
+- fire it up like `pm2 start fortwatcher.sh --name fortWatcher`
 - after first start blisseydb table webhooks will be created. Add your mon area/fence names with their respective discord channel webhook
