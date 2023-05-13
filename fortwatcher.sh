@@ -82,10 +82,7 @@ fi
 
 process(){
 for i in $1 ;do
-    if [[ $timing == "true" ]] ;then
-#      id=$(echo $line| jq -r 'if (.new.id | length > 0) then .new.id else .old.id end')
-      totstart=$(date '+%Y%m%d %H:%M:%S.%3N')
-    fi
+    totstart=$(date '+%Y%m%d %H:%M:%S.%3N')
     change_type=$(echo $line| jq -r '.change_type')
 
     if [[ $change_type == "removal" ]] ;then
@@ -98,14 +95,17 @@ for i in $1 ;do
       get_monfence
       get_address
       get_staticmap
-      echo "[$(date '+%Y%m%d %H:%M:%S')] removed $type id: $id location: $lat,$lon fence: $fence name: \"$name\"" >> $folder/logs/fortwatcher.log
+      l2="removed $type id: $id location: $lat,$lon fence: $fence name: \"$name\""
       if [[ ! -z $webhook ]] ;then
+        l1="Send"
         if [[ $timing == "true" ]] ;then hookstart=$(date '+%Y%m%d %H:%M:%S.%3N') ;fi
         cd $folder && ./discord.sh --username "${change_type^} ${type^}" --color "16711680" --avatar "https://cdn.discordapp.com/attachments/657164868969037824/1104477454313197578/770615.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --footer "Fence: $fence Location: $lat,$lon" --description "Name: **$name**\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)" >> $folder/logs/fortwatcher.log
         if [[ $timing == "true" ]] ;then
           hookstop=$(date '+%Y%m%d %H:%M:%S.%3N')
           hookdiff=$(date -d "$hookstop $(date -d "$hookstart" +%s.%N) seconds ago" +%s.%3N)
         fi
+      else
+        l1="noHook"
       fi
     elif [[ $change_type == "new" ]] ;then
       id=$(echo $line| jq -r '.new.id')
@@ -129,17 +129,18 @@ for i in $1 ;do
       get_monfence
       get_address
       get_staticmap
-      echo "[$(date '+%Y%m%d %H:%M:%S')] added $type id: $id location: $lat,$lon fence: $fence name: \"$name\"" >> $folder/logs/fortwatcher.log
+      l2="added $type id: $id location: $lat,$lon fence: $fence name: \"$name\""
 
       if [[ $ignore_existing_portal != "true" && $type == "portal" ]] ;then
-        echo "we need to check golbat db and set webhook empty if exists, log not sending"
         exists=$(query "select count(id) from (select id from $golbatdb.pokestop where id='$id' union all select id from $golbatdb.gym where id='$id') t group by id;")
         if [[ ! -z $exists ]] ;then
           webhook=""
+          l1="Skipped"
         fi
       fi
 
       if [[ ! -z $webhook ]] ;then
+        if [[ -z $l1 ]] ;then l1="Send" ;fi
         if [[ $timing == "true" ]] ;then hookstart=$(date '+%Y%m%d %H:%M:%S.%3N') ;fi
         if [[ $type == "portal" ]] ;then
           cd $folder && ./discord.sh --username "${change_type^} ${type^}" --color "12609532" --avatar "https://i.imgur.com/HwRhTBF.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --footer "Fence: $fence Location: $lat,$lon" --description "Name: $name\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)" >> $folder/logs/fortwatcher.log
@@ -150,6 +151,8 @@ for i in $1 ;do
           hookstop=$(date '+%Y%m%d %H:%M:%S.%3N')
           hookdiff=$(date -d "$hookstop $(date -d "$hookstart" +%s.%N) seconds ago" +%s.%3N)
         fi
+      else
+        if [[ -z $l1 ]] ;then l1="noHook" ;fi
       fi
     elif [[ $change_type == "edit" ]] ;then
       edit_types=$(echo $line| jq -r '.edit_types')
@@ -172,31 +175,36 @@ for i in $1 ;do
       get_address
       get_staticmap
       if [[ ! -z $webhook ]] ;then
+        l1="Send"
         if [[ $timing == "true" ]] ;then hookstart=$(date '+%Y%m%d %H:%M:%S.%3N') ;fi
         if [[ $oldname != $name ]] ;then
-          echo "[$(date '+%Y%m%d %H:%M:%S')] edit $type name id: $id fence: $fence name: \"$name\" oldname: \"$oldname\"" >> $folder/logs/fortwatcher.log
+          l2="edit $type name id: $id fence: $fence name: \"$name\" oldname: \"$oldname\""
           cd $folder && ./discord.sh --username "${type^} name change" --color "15237395" --avatar "https://cdn.discordapp.com/attachments/657164868969037824/1104477454313197578/770615.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --footer "Fence: $fence Location: $lat,$lon" --description "Old: $oldname\nNew: **$name**\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)" >> $folder/logs/fortwatcher.log
         elif [[ $oldlat != $lat || $oldlon != $lon ]] ;then
-          echo "[$(date '+%Y%m%d %H:%M:%S')] edit $type location id: $id fence: $fence name: \"$name\" oldloc: $oldlat,$oldlon" >> $folder/logs/fortwatcher.log
+          l2="edit $type location id: $id fence: $fence name: \"$name\" oldloc: $oldlat,$oldlon"
           cd $folder && ./discord.sh --username "${type^} location change" --color "15237395" --avatar "https://cdn.discordapp.com/attachments/657164868969037824/1104477454313197578/770615.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --footer "Fence: $fence Location: $lat,$lon" --description "Name: **$name**\nOld: $oldlat,$oldlon\nNew: \`$lat,$lon\`\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)" >> $folder/logs/fortwatcher.log
         elif [[ $oldtype != $type ]] ;then
-          echo "[$(date '+%Y%m%d %H:%M:%S')] edit oldtype conversion name id: $id fence: $fence name: \"$name\" newtype: $type" >> $folder/logs/fortwatcher.log
-         cd $folder && ./discord.sh --username "Conversion" --color "15237395" --avatar "https://cdn.discordapp.com/attachments/657164868969037824/1104477454313197578/770615.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --footer "Fence: $fence Location: $lat,$lon" --description "Name: **$name**\nOld type: $oldtype\nNew type: **$type**\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)" >> $folder/logs/fortwatcher.log
+          l2="edit oldtype conversion name id: $id fence: $fence name: \"$name\" newtype: $type"
+          cd $folder && ./discord.sh --username "Conversion" --color "15237395" --avatar "https://cdn.discordapp.com/attachments/657164868969037824/1104477454313197578/770615.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --footer "Fence: $fence Location: $lat,$lon" --description "Name: **$name**\nOld type: $oldtype\nNew type: **$type**\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)" >> $folder/logs/fortwatcher.log
         fi
         if [[ $timing == "true" ]] ;then
           hookstop=$(date '+%Y%m%d %H:%M:%S.%3N')
           hookdiff=$(date -d "$hookstop $(date -d "$hookstart" +%s.%N) seconds ago" +%s.%3N)
         fi
+      else
+        l1="noHook"
       fi
     else
       echo "THIS SHOULD NOT HAPPEN" >> $folder/logs/fortwatcher.log
       echo $line | jq >> $folder/logs/fortwatcher.log
     fi
-  if [[ $timing == "true" ]] ;then
     totstop=$(date '+%Y%m%d %H:%M:%S.%3N')
     totdiff=$(date -d "$totstop $(date -d "$totstart" +%s.%N) seconds ago" +%s.%3N)
-    echo "[$(date '+%Y%m%d %H:%M:%S.%3N')] $id Total $totdiff sql $sqldiff nominatim $nomdiff tileserver $tilediff webhook $hookdiff" >> $folder/logs/timing.log
-  fi
+    echo "[$(date '+%Y%m%d %H:%M:%S')] $l1 $l2 Time $totdiff\s" >> $folder/logs/fortwatcher.log
+
+    if [[ $timing == "true" ]] ;then
+      echo "[$(date '+%Y%m%d %H:%M:%S.%3N')] $id Total $totdiff sql $sqldiff nominatim $nomdiff tileserver $tilediff webhook $hookdiff" >> $folder/logs/timing.log
+    fi
 done
 }
 
