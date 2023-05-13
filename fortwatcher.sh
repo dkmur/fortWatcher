@@ -91,7 +91,7 @@ for i in $1 ;do
     if [[ $change_type == "removal" ]] ;then
       id=$(echo $line| jq -r '.old.id')
       type=$(echo $line| jq -r '.old.type')
-      name=$(echo $line| jq -r '.old.name' | sed 's/\"/\\\"/g')
+      name=$(echo $line| jq -r '.old.name' | sed 's/\"/\\\"/g' | sed 's/\//\\\//g')
       image_url=$(echo $line| jq -r '.old.image_url')
       lat=$(echo $line| jq -r '.old.location.lat' | xargs printf "%.*f\n" 6)
       lon=$(echo $line| jq -r '.old.location.lon' | xargs printf "%.*f\n" 6)
@@ -110,7 +110,7 @@ for i in $1 ;do
     elif [[ $change_type == "new" ]] ;then
       id=$(echo $line| jq -r '.new.id')
       type=$(echo $line| jq -r '.new.type')
-      name=$(echo $line| jq -r '.new.name' | sed 's/\"/\\\"/g')
+      name=$(echo $line| jq -r '.new.name' | sed 's/\"/\\\"/g' | sed 's/\//\\\//g')
       if [[ $name == "null" ]] ;then
         name="Unknown"
       fi
@@ -155,7 +155,7 @@ for i in $1 ;do
       edit_types=$(echo $line| jq -r '.edit_types')
 #      oldid=$(echo $line| jq -r '.old.id')
       oldtype=$(echo $line| jq -r '.old.type')
-      oldname=$(echo $line| jq -r '.old.name' | sed 's/\"/\\\"/g')
+      oldname=$(echo $line| jq -r '.old.name' | sed 's/\"/\\\"/g' | sed 's/\//\\\//g')
       if [[ $oldname == "null" ]] ;then
         oldname="Unknown"
       fi
@@ -164,7 +164,7 @@ for i in $1 ;do
       oldlon=$(echo $line| jq -r '.old.location.lon' | xargs printf "%.*f\n" 6)
       id=$(echo $line| jq -r '.new.id')
       type=$(echo $line| jq -r '.new.type')
-      name=$(echo $line| jq -r '.new.name' | sed 's/\"/\\\"/g')
+      name=$(echo $line| jq -r '.new.name' | sed 's/\"/\\\"/g' | sed 's/\//\\\//g')
       image_url=$(echo $line| jq -r '.new.image_url')
       lat=$(echo $line| jq -r '.new.location.lat' | xargs printf "%.*f\n" 6)
       lon=$(echo $line| jq -r '.new.location.lon' | xargs printf "%.*f\n" 6)
