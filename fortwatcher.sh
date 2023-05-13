@@ -200,7 +200,7 @@ for i in $1 ;do
     fi
     totstop=$(date '+%Y%m%d %H:%M:%S.%3N')
     totdiff=$(date -d "$totstop $(date -d "$totstart" +%s.%N) seconds ago" +%s.%3N)
-    echo "[$(date '+%Y%m%d %H:%M:%S')] $l1 $l2 Time $totdiff\s" >> $folder/logs/fortwatcher.log
+    echo "[$(date '+%Y%m%d %H:%M:%S')] $l1 $l2 time: $totdiff s" >> $folder/logs/fortwatcher.log
 
     if [[ $timing == "true" ]] ;then
       echo "[$(date '+%Y%m%d %H:%M:%S.%3N')] $id Total $totdiff sql $sqldiff nominatim $nomdiff tileserver $tilediff webhook $hookdiff" >> $folder/logs/timing.log
