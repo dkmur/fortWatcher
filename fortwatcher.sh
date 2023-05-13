@@ -5,6 +5,8 @@ source $folder/config.ini
 
 ## Logging
 mkdir -p $folder/logs
+# rename log
+if [[ -f $folder/logs/stops.log ]] ;then mv $folder/logs/stops.log $folder/logs/fortwatcher.log ;fi
 # log start
 echo "[$(date '+%Y%m%d %H:%M:%S')] fortwatcher (re)started" >> $folder/logs/fortwatcher.log
 # stderr to logfile
@@ -94,14 +96,8 @@ for i in $1 ;do
       lat=$(echo $line| jq -r '.old.location.lat' | xargs printf "%.*f\n" 6)
       lon=$(echo $line| jq -r '.old.location.lon' | xargs printf "%.*f\n" 6)
       get_monfence
-      if [[ $timing != "true" ]] ;then
-        get_address &
-        get_staticmap &
-        wait
-      else
-        get_address
-        get_staticmap
-     fi
+      get_address
+      get_staticmap
       echo "[$(date '+%Y%m%d %H:%M:%S')] removed $type id: $id location: $lat,$lon fence: $fence name: \"$name\"" >> $folder/logs/fortwatcher.log
       if [[ ! -z $webhook ]] ;then
         if [[ $timing == "true" ]] ;then hookstart=$(date '+%Y%m%d %H:%M:%S.%3N') ;fi
@@ -131,15 +127,18 @@ for i in $1 ;do
       lat=$(echo $line| jq -r '.new.location.lat' | xargs printf "%.*f\n" 6)
       lon=$(echo $line| jq -r '.new.location.lon' | xargs printf "%.*f\n" 6)
       get_monfence
-      if [[ $timing != "true" ]] ;then
-        get_address &
-        get_staticmap &
-        wait
-      else
-        get_address
-        get_staticmap
-      fi
+      get_address
+      get_staticmap
       echo "[$(date '+%Y%m%d %H:%M:%S')] added $type id: $id location: $lat,$lon fence: $fence name: \"$name\"" >> $folder/logs/fortwatcher.log
+
+      if [[ $ignore_existing_portal != "true" && $type == "portal" ]] ;then
+        echo "we need to check golbat db and set webhook empty if exists, log not sending"
+        exists=$(query "select count(id) from (select id from $golbatdb.pokestop where id='$id' union all select id from $golbatdb.gym where id='$id') t group by id;")
+        if [[ ! -z $exists ]] ;then
+          webhook=""
+        fi
+      fi
+
       if [[ ! -z $webhook ]] ;then
         if [[ $timing == "true" ]] ;then hookstart=$(date '+%Y%m%d %H:%M:%S.%3N') ;fi
         if [[ $type == "portal" ]] ;then
@@ -170,14 +169,8 @@ for i in $1 ;do
       lat=$(echo $line| jq -r '.new.location.lat' | xargs printf "%.*f\n" 6)
       lon=$(echo $line| jq -r '.new.location.lon' | xargs printf "%.*f\n" 6)
       get_monfence
-      if [[ $timing != "true" ]] ;then
-        get_address &
-        get_staticmap &
-        wait
-      else
-        get_address
-        get_staticmap
-      fi
+      get_address
+      get_staticmap
       if [[ ! -z $webhook ]] ;then
         if [[ $timing == "true" ]] ;then hookstart=$(date '+%Y%m%d %H:%M:%S.%3N') ;fi
         if [[ $oldname != $name ]] ;then
@@ -213,9 +206,6 @@ done
 query "CREATE TABLE IF NOT EXISTS webhooks (area varchar(40) NOT NULL,fence varchar(40) DEFAULT Area,webhook varchar(150),subdomain varchar(20)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
 # table updates
 query "alter table webhooks add column if not exists subdomain varchar(40);"
-
-# rename log
-if [[ -f $folder/logs/stops.log ]] ;then mv $folder/logs/stops.log $folder/logs/fortwatcher.log ;fi
 
 # start receiver and process
 while true ;do

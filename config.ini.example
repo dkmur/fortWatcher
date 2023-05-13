@@ -3,7 +3,8 @@ sqluser=
 sqlpass=
 dbip=127.0.0.1
 dbport=3306
-blisseydb=chansey
+blisseydb=blissey
+golbatdb=golbat
 
 ## fortWatcher
 receiver_port=
@@ -15,3 +16,4 @@ map_url="https://mymap.com"
 nominatim_url=""
 tileserver_url=""
 timing=false				# write timings to timing.log
+ignore_existing_portal=true		# ignore reported new portals already in db as stop/gym
