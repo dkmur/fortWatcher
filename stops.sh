@@ -94,8 +94,14 @@ for i in $1 ;do
       lat=$(echo $line| jq -r '.old.location.lat' | xargs printf "%.*f\n" 6)
       lon=$(echo $line| jq -r '.old.location.lon' | xargs printf "%.*f\n" 6)
       get_monfence
-      get_address
-      get_staticmap
+      if [[ $timing != "true" ]] ;then
+        get_address &
+        get_staticmap &
+        wait
+      else
+        get_address
+        get_staticmap
+     fi
       echo "[$(date '+%Y%m%d %H:%M:%S')] removed $type id: $id location: $lat,$lon fence: $fence name: \"$name\"" >> $folder/logs/stops.log
       if [[ ! -z $webhook ]] ;then
         if [[ $timing == "true" ]] ;then hookstart=$(date '+%Y%m%d %H:%M:%S.%3N') ;fi
@@ -125,8 +131,14 @@ for i in $1 ;do
       lat=$(echo $line| jq -r '.new.location.lat' | xargs printf "%.*f\n" 6)
       lon=$(echo $line| jq -r '.new.location.lon' | xargs printf "%.*f\n" 6)
       get_monfence
-      get_address
-      get_staticmap
+      if [[ $timing != "true" ]] ;then
+        get_address &
+        get_staticmap &
+        wait
+      else
+        get_address
+        get_staticmap
+      fi
       echo "[$(date '+%Y%m%d %H:%M:%S')] added $type id: $id location: $lat,$lon fence: $fence name: \"$name\"" >> $folder/logs/stops.log
       if [[ ! -z $webhook ]] ;then
         if [[ $timing == "true" ]] ;then hookstart=$(date '+%Y%m%d %H:%M:%S.%3N') ;fi
@@ -158,10 +170,14 @@ for i in $1 ;do
       lat=$(echo $line| jq -r '.new.location.lat' | xargs printf "%.*f\n" 6)
       lon=$(echo $line| jq -r '.new.location.lon' | xargs printf "%.*f\n" 6)
       get_monfence
-      get_address
-      get_staticmap
-#      echo $line | jq >> $folder/logs/stops.log
-#      echo "[$(date '+%Y%m%d %H:%M:%S')] edit $type id: $id fence: $fence name: \"$name\"" >> $folder/logs/stops.log
+      if [[ $timing != "true" ]] ;then
+        get_address &
+        get_staticmap &
+        wait
+      else
+        get_address
+        get_staticmap
+      fi
       if [[ ! -z $webhook ]] ;then
         if [[ $timing == "true" ]] ;then hookstart=$(date '+%Y%m%d %H:%M:%S.%3N') ;fi
         if [[ $oldname != $name ]] ;then
@@ -169,7 +185,6 @@ for i in $1 ;do
           cd $folder && ./discord.sh --username "${type^} name change" --color "15237395" --avatar "https://cdn.discordapp.com/attachments/657164868969037824/1104477454313197578/770615.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --footer "Fence: $fence Location: $lat,$lon" --description "Old: $oldname\nNew: **$name**\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)" >> $folder/logs/stops.log
         elif [[ $oldlat != $lat || $oldlon != $lon ]] ;then
           echo "[$(date '+%Y%m%d %H:%M:%S')] edit $type location id: $id fence: $fence name: \"$name\" oldloc: $oldlat,$oldlon" >> $folder/logs/stops.log
-#          echo $line | jq >> $folder/logs/stops.log
           cd $folder && ./discord.sh --username "${type^} location change" --color "15237395" --avatar "https://cdn.discordapp.com/attachments/657164868969037824/1104477454313197578/770615.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --footer "Fence: $fence Location: $lat,$lon" --description "Name: **$name**\nOld: $oldlat,$oldlon\nNew: \`$lat,$lon\`\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)" >> $folder/logs/stops.log
         elif [[ $oldtype != $type ]] ;then
           echo "[$(date '+%Y%m%d %H:%M:%S')] edit oldtype conversion name id: $id fence: $fence name: \"$name\" newtype: $type" >> $folder/logs/stops.log
