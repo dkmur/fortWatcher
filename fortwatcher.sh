@@ -131,7 +131,7 @@ for i in $1 ;do
       get_staticmap
       l2="added $type id: $id location: $lat,$lon fence: $fence name: \"$name\""
 
-      if [[ $ignore_existing_portal != "true" && $type == "portal" ]] ;then
+      if [[ $ignore_existing_portal == "true" && $type == "portal" ]] ;then
         exists=$(query "select count(id) from (select id from $golbatdb.pokestop where id='$id' union all select id from $golbatdb.gym where id='$id') t group by id;")
         if [[ ! -z $exists ]] ;then
           webhook=""
