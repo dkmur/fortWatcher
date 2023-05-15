@@ -8,12 +8,13 @@ golbatdb=golbat
 
 ## fortWatcher
 receiver_port=
-unfenced_webhook=""
+unfenced_webhook=""					# seperate webhook for unfenced portals/forts
+timing=false                                            # write more detailed timings to timing.log
+ignore_existing_portal=true                             # ignore reported new portals already in db as stop/gym
+write_raw=false                                         # write received webhooks to raw.log
 
-## more
+## urls
 map_name=MyMap
 map_url="https://mymap.com"
 nominatim_url=""
 tileserver_url=""
-timing=false				# write timings to timing.log
-ignore_existing_portal=true		# ignore reported new portals already in db as stop/gym

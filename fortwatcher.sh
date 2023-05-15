@@ -84,8 +84,10 @@ fi
 process(){
 for i in $1 ;do
     totstart=$(date '+%Y%m%d %H:%M:%S.%3N')
-    echo $totstart >> $folder/logs/raw.log
-    echo $line | jq >> $folder/logs/raw.log
+    if [[ $write_raw == "true" ]] ;then
+      echo $totstart >> $folder/logs/raw.log
+      echo $line | jq >> $folder/logs/raw.log
+    fi
     change_type=$(echo $line| jq -r '.change_type')
 
     if [[ $change_type == "removal" ]] ;then
