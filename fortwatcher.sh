@@ -29,10 +29,11 @@ if [[ $timing == "true" ]] ;then sqlstart=$(date '+%Y%m%d %H:%M:%S.%3N') ;fi
 fence=""
 webhook=""
 map_urll=""
+subdomain=""
 fence=$(query "select fence from geofences where ST_CONTAINS(st, point($lat,$lon)) and type='mon';")
-subdomain=$(query "select ifnull(subdomain,'') from webhooks where fence='$fence';")
 if [[ ! -z $fence ]] ;then
-  webhook=$(query "select webhook from webhooks where fence='$fence';")
+  webhook=$(query "select ifnull(webhook,'') from webhooks where fence='$fence';")
+  subdomain=$(query "select ifnull(subdomain,'') from webhooks where fence='$fence';")
 else
   webhook=$unfenced_webhook
   fence="unfenced"
@@ -83,6 +84,8 @@ fi
 process(){
 for i in $1 ;do
     totstart=$(date '+%Y%m%d %H:%M:%S.%3N')
+    echo $totstart >> $folder/logs/raw.log
+    echo $line | jq >> $folder/logs/raw.log
     change_type=$(echo $line| jq -r '.change_type')
 
     if [[ $change_type == "removal" ]] ;then
@@ -156,24 +159,29 @@ for i in $1 ;do
       fi
     elif [[ $change_type == "edit" ]] ;then
       edit_types=$(echo $line| jq -r '.edit_types')
-#      oldid=$(echo $line| jq -r '.old.id')
+
+      oldid=$(echo $line| jq -r '.old.id')
       oldtype=$(echo $line| jq -r '.old.type')
       oldname=$(echo $line| jq -r '.old.name' | sed 's/\"/\\\"/g' | sed 's/\//\\\//g')
-      if [[ $oldname == "null" ]] ;then
-        oldname="Unknown"
-      fi
-#      oldimage_url=$(echo $line| jq -r '.old.image_url')
+      if [[ $oldname == "null" ]] ;then oldname="Unknown" ;fi
+      olddescription=$(echo $line| jq -r '.old.description')
+      oldimage_url=$(echo $line| jq -r '.old.image_url')
       oldlat=$(echo $line| jq -r '.old.location.lat' | xargs printf "%.*f\n" 6)
       oldlon=$(echo $line| jq -r '.old.location.lon' | xargs printf "%.*f\n" 6)
+
       id=$(echo $line| jq -r '.new.id')
       type=$(echo $line| jq -r '.new.type')
       name=$(echo $line| jq -r '.new.name' | sed 's/\"/\\\"/g' | sed 's/\//\\\//g')
+      if [[ $name == "null" ]] ;then name="Unknown" ;fi
+      description=$(echo $line| jq -r '.new.description')
       image_url=$(echo $line| jq -r '.new.image_url')
       lat=$(echo $line| jq -r '.new.location.lat' | xargs printf "%.*f\n" 6)
       lon=$(echo $line| jq -r '.new.location.lon' | xargs printf "%.*f\n" 6)
+
       get_monfence
       get_address
       get_staticmap
+
       if [[ ! -z $webhook ]] ;then
         l1="Send"
         if [[ $timing == "true" ]] ;then hookstart=$(date '+%Y%m%d %H:%M:%S.%3N') ;fi
@@ -186,6 +194,18 @@ for i in $1 ;do
         elif [[ $oldtype != $type ]] ;then
           l2="edit oldtype conversion name id: $id fence: $fence name: \"$name\" newtype: $type"
           cd $folder && ./discord.sh --username "Conversion" --color "15237395" --avatar "https://cdn.discordapp.com/attachments/657164868969037824/1104477454313197578/770615.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --footer "Fence: $fence Location: $lat,$lon" --description "Name: **$name**\nOld type: $oldtype\nNew type: **$type**\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)" >> $folder/logs/fortwatcher.log
+        elif [[ $oldimage_url != $image_url ]] ;then
+          l1="Skipped"
+          l2="edit $type image id: $id fence: $fence name: \"$name\""
+        elif [[ $olddescription != $description ]] ;then
+          l1="Skipped"
+          l2="edit $type description id: $id fence: $fence name: \"$name\""
+        elif [[ $oldid != $id ]] ;then
+          l1="Skipped"
+          l2="edit $type id id: $id fence: $fence name: \"$name\""
+        else
+          l2="THIS SHOULD NOT HAPPEN, what was edited?"
+          echo $line| jq >> $folder/logs/fortwatcher.log
         fi
         if [[ $timing == "true" ]] ;then
           hookstop=$(date '+%Y%m%d %H:%M:%S.%3N')
@@ -199,8 +219,15 @@ for i in $1 ;do
           l2="edit $type location id: $id fence: $fence name: \"$name\" oldloc: $oldlat,$oldlon"
         elif [[ $oldtype != $type ]] ;then
           l2="edit oldtype conversion name id: $id fence: $fence name: \"$name\" newtype: $type"
+        elif [[ $oldimage_url != $image_url ]] ;then
+          l2="edit $type image id: $id fence: $fence name: \"$name\""
+        elif [[ $olddescription != $description ]] ;then
+          l2="edit $type description id: $id fence: $fence name: \"$name\""
+        elif [[ $oldid != $id ]] ;then
+          l2="edit $type id id: $id fence: $fence name: \"$name\""
         else
-          l2="some edit, not name/location/type"
+          l2="THIS SHOULD NOT HAPPEN, what was edited?"
+          echo $line| jq >> $folder/logs/fortwatcher.log
         fi
       fi
     else
