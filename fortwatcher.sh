@@ -95,6 +95,15 @@ for i in $1 ;do
       type=$(echo $line| jq -r '.old.type')
       name=$(echo $line| jq -r '.old.name' | sed 's/\"/\\\"/g' | sed 's/\//\\\//g')
       image_url=$(echo $line| jq -r '.old.image_url')
+      if [[ $image_url == "null" ]] ;then
+        if [[ $type == "pokestop" ]] ;then
+          image_url="https://raw.githubusercontent.com/nileplumb/PkmnShuffleMap/master/UICONS/pokestop/0.png"
+        elif [[ $type == "gym" ]] ;then
+          image_url="https://raw.githubusercontent.com/nileplumb/PkmnShuffleMap/master/UICONS/gym/0.png"
+        else
+          image_url="https://i.imgur.com/HwRhTBF.png"
+        fi
+      fi
       lat=$(echo $line| jq -r '.old.location.lat' | xargs printf "%.*f\n" 6)
       lon=$(echo $line| jq -r '.old.location.lon' | xargs printf "%.*f\n" 6)
       get_monfence
@@ -177,6 +186,15 @@ for i in $1 ;do
       if [[ $name == "null" ]] ;then name="Unknown" ;fi
       description=$(echo $line| jq -r '.new.description')
       image_url=$(echo $line| jq -r '.new.image_url')
+      if [[ $image_url == "null" ]] ;then
+        if [[ $type == "pokestop" ]] ;then
+          image_url="https://raw.githubusercontent.com/nileplumb/PkmnShuffleMap/master/UICONS/pokestop/0.png"
+        elif [[ $type == "gym" ]] ;then
+          image_url="https://raw.githubusercontent.com/nileplumb/PkmnShuffleMap/master/UICONS/gym/0.png"
+        else
+          image_url="https://i.imgur.com/HwRhTBF.png"
+        fi
+      fi
       lat=$(echo $line| jq -r '.new.location.lat' | xargs printf "%.*f\n" 6)
       lon=$(echo $line| jq -r '.new.location.lon' | xargs printf "%.*f\n" 6)
 
