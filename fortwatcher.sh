@@ -112,21 +112,17 @@ for i in $1 ;do
       get_address
       get_staticmap
       l2="removed $type id: $id location: $lat,$lon fence: $fence name: \"$name\""
-      if [[ ! -z $webhook ]] ;then
+      if [[ ! -z $webhook ]] || [[ ! -z $chatid ]] ;then
         l1="Send"
         if [[ $timing == "true" ]] ;then hookstart=$(date '+%Y%m%d %H:%M:%S.%3N') ;fi
-        cd $folder && ./discord.sh --username "${change_type^} ${type^}" --color "16711680" --avatar "https://cdn.discordapp.com/attachments/657164868969037824/1104477454313197578/770615.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --footer "Fence: $fence Location: $lat,$lon" --description "Name: **$name**\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)" >> $folder/logs/fortwatcher.log
+        if [[ ! -z $webhook ]] ;then cd $folder && ./discord.sh --username "${change_type^} ${type^}" --color "16711680" --avatar "https://cdn.discordapp.com/attachments/657164868969037824/1104477454313197578/770615.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --footer "Fence: $fence Location: $lat,$lon" --description "Name: **$name**\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)" >> $folder/logs/fortwatcher.log ;fi
+        if [[ ! -z $chatid ]] ;then pregen=$(sed 's/+/%2B/g' <<< $pregen) && cd $folder && ./telegram.sh $verbose\--chatid $chatid --bottoken $telegram_token --title "${change_type^} ${type^}" --text "[\u200A]($tileserver_url/staticmap/pregenerated/$pregen)\nName: $name\n\n$address\n[Google](https://www.google.com/maps/search/?api=1%26amp;query=$lat,$lon) \| [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) \| [$map_name]($map_urll/@/$lat/$lon/16)" >> $folder/logs/fortwatcher.log ;fi
         if [[ $timing == "true" ]] ;then
           hookstop=$(date '+%Y%m%d %H:%M:%S.%3N')
           hookdiff=$(date -d "$hookstop $(date -d "$hookstart" +%s.%N) seconds ago" +%s.%3N)
         fi
       else
         l1="noHook"
-      fi
-      if [[ ! -z $chatid ]] ;then
-        l1="Send"
-        pregen=$(sed 's/+/%2B/g' <<< $pregen)
-        cd $folder && ./telegram.sh $verbose\--chatid $chatid --bottoken $telegram_token --title "${change_type^} ${type^}" --text "[\u200A]($tileserver_url/staticmap/pregenerated/$pregen)\nName: $name\n\n$address\n[Google](https://www.google.com/maps/search/?api=1%26amp;query=$lat,$lon) \| [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) \| [$map_name]($map_urll/@/$lat/$lon/16)" >> $folder/logs/fortwatcher.log
       fi
     elif [[ $change_type == "new" ]] ;then
       id=$(echo $line| jq -r '.new.id')
@@ -161,13 +157,15 @@ for i in $1 ;do
         fi
       fi
 
-      if [[ ! -z $webhook ]] ;then
+      if [[ ! -z $webhook ]] || [[ ! -z $chatid ]] ;then
         if [[ -z $l1 ]] ;then l1="Send" ;fi
         if [[ $timing == "true" ]] ;then hookstart=$(date '+%Y%m%d %H:%M:%S.%3N') ;fi
         if [[ $type == "portal" ]] ;then
-          cd $folder && ./discord.sh --username "${change_type^} ${type^}" --color "12609532" --avatar "https://i.imgur.com/HwRhTBF.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --footer "Fence: $fence Location: $lat,$lon" --description "Name: $name\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)" >> $folder/logs/fortwatcher.log
+          if [[ ! -z $webhook ]] ;then cd $folder && ./discord.sh --username "${change_type^} ${type^}" --color "12609532" --avatar "https://i.imgur.com/HwRhTBF.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --footer "Fence: $fence Location: $lat,$lon" --description "Name: $name\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)" >> $folder/logs/fortwatcher.log ;fi
+          if [[ ! -z $chatid ]] ;then pregen=$(sed 's/+/%2B/g' <<< $pregen) && cd $folder && ./telegram.sh $verbose\--chatid $chatid --bottoken $telegram_token --title "${change_type^} ${type^}" --text "[\u200A]($tileserver_url/staticmap/pregenerated/$pregen)\nName: $name\n\n$address\n[Google](https://www.google.com/maps/search/?api=1%26amp;query=$lat,$lon) \| [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) \| [$map_name]($map_urll/@/$lat/$lon/16)" >> $folder/logs/fortwatcher.log ;fi
         else
-          cd $folder && ./discord.sh --username "${change_type^} ${type^}" --color "65280" --avatar "https://cdn.discordapp.com/attachments/657164868969037824/1104477454313197578/770615.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --footer "Fence: $fence Location: $lat,$lon" --description "Name: $name\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)" >> $folder/logs/fortwatcher.log
+          if [[ ! -z $webhook ]] ;then cd $folder && ./discord.sh --username "${change_type^} ${type^}" --color "65280" --avatar "https://cdn.discordapp.com/attachments/657164868969037824/1104477454313197578/770615.png" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --footer "Fence: $fence Location: $lat,$lon" --description "Name: $name\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)" >> $folder/logs/fortwatcher.log ;fi
+          if [[ ! -z $chatid ]] ;then pregen=$(sed 's/+/%2B/g' <<< $pregen) && cd $folder && ./telegram.sh $verbose\--chatid $chatid --bottoken $telegram_token --title "${change_type^} ${type^}" --text "[\u200A]($tileserver_url/staticmap/pregenerated/$pregen)\nName: $name\n\n$address\n[Google](https://www.google.com/maps/search/?api=1%26amp;query=$lat,$lon) \| [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) \| [$map_name]($map_urll/@/$lat/$lon/16)" >> $folder/logs/fortwatcher.log ;fi
         fi
         if [[ $timing == "true" ]] ;then
           hookstop=$(date '+%Y%m%d %H:%M:%S.%3N')
@@ -175,11 +173,6 @@ for i in $1 ;do
         fi
       else
         if [[ -z $l1 ]] ;then l1="noHook" ;fi
-      fi
-      if [[ ! -z $chatid ]] ;then
-        l1="Send"
-        pregen=$(sed 's/+/%2B/g' <<< $pregen)
-        cd $folder && ./telegram.sh $verbose\--chatid $chatid --bottoken $telegram_token --title "${change_type^} ${type^}" --text "[\u200A]($tileserver_url/staticmap/pregenerated/$pregen)\nName: $name\n\n$address\n[Google](https://www.google.com/maps/search/?api=1%26amp;query=$lat,$lon) \| [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) \| [$map_name]($map_urll/@/$lat/$lon/16)" >> $folder/logs/fortwatcher.log
       fi
     elif [[ $change_type == "edit" ]] ;then
       edit_types=$(echo $line| jq -r '.edit_types')
