@@ -5,7 +5,7 @@
 
 
 Webhook receiver for Golbat(fort_update) and intelwatcher(new portals).  
-Updates will be mapped to blisseydb mon area fences and discord notification send.
+Updates will be mapped to blisseydb mon area fences and discord/telegram notification send.
 
 - install jq
 - install ncat
@@ -38,4 +38,4 @@ types = ["fort_update"]
 }
 ```
 - fire it up like `pm2 start fortwatcher.sh --name fortWatcher`
-- after first start blisseydb table webhooks will be created. Add your mon area/fence names with their respective discord channel webhook
+- after first start blisseydb table webhooks will be created. Add your mon area/fence names with their respective discord channel webhook and/or telegram chatid.
