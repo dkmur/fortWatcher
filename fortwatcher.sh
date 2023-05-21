@@ -255,11 +255,11 @@ for i in $1 ;do
       lon=$(echo $line| jq -r '.new.location.lon' | xargs printf "%.*f\n" 6)
 
       get_monfence
-      get_address
-      get_staticmap
 
       if [[ $editName == "1" || $editLocation == "1" || $editImage == "1" || $editDescription == "1" || $convertFort == "1" ]] ;then
         if [[ ! -z $webhook ]] || [[ ! -z $chatid ]] ;then
+          get_address
+          get_staticmap
           l1="Send"
           if [[ $timing == "true" ]] ;then hookstart=$(date '+%Y%m%d %H:%M:%S.%3N') ;fi
           color="15237395"
@@ -268,7 +268,7 @@ for i in $1 ;do
             l2="edit $type name id: $id fence: $fence name: \"$name\" oldname: \"$oldname\""
             if [[ $editNameASadded == "0" ]] ;then
               username="${type^} name change"
-              description="Old: $oldname\nNew: **$name**\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)"
+              descript="Old: $oldname\nNew: **$name**\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)"
               text="[\u200A]($tileserver_url/staticmap/pregenerated/$pregen)\nOld: $oldname\nNew: $name\n\n$address\n[Google](https://www.google.com/maps/search/?api=1%26amp;query=$lat,$lon) \| [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) \| [$map_name]($map_urll/@/$lat/$lon/16)"
               if [[ ! -z $webhook && $editName == "1" ]] ;then discord ;fi
               if [[ ! -z $chatid && $editName == "1" ]] ;then pregen=$(sed 's/+/%2B/g' <<< $pregen) && telegram ;fi
@@ -283,28 +283,28 @@ for i in $1 ;do
           elif [[ $oldlat != $lat || $oldlon != $lon ]] ;then
             l2="edit $type location id: $id fence: $fence name: \"$name\" oldloc: $oldlat,$oldlon"
             username="${type^} location change"
-            description="Old: $oldlat,$oldlon\nNew: \`$lat,$lon\`\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)"
+            descript="Old: $oldlat,$oldlon\nNew: \`$lat,$lon\`\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)"
             text="[\u200A]($tileserver_url/staticmap/pregenerated/$pregen)\nOld: $oldlat,$oldlon\nNew: $lat,$lon\n\n$address\n[Google](https://www.google.com/maps/search/?api=1%26amp;query=$lat,$lon) \| [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) \| [$map_name]($map_urll/@/$lat/$lon/16)"
             if [[ ! -z $webhook && $editLocation == "1" ]] ;then discord ;fi
             if [[ ! -z $chatid && $editLocation == "1" ]] ;then pregen=$(sed 's/+/%2B/g' <<< $pregen) && telegram ;fi
           elif [[ $oldtype != $type ]] ;then
             l2="edit oldtype conversion name id: $id fence: $fence name: \"$name\" newtype: $type"
             username="Conversion"
-            description="Name: **$name**\nOld type: $oldtype\nNew type: **$type**\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)"
+            descript="Name: **$name**\nOld type: $oldtype\nNew type: **$type**\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)"
             text="[\u200A]($tileserver_url/staticmap/pregenerated/$pregen)\nName: $name\nOld: $oldtype\nNew: $type\n\n$address\n[Google](https://www.google.com/maps/search/?api=1%26amp;query=$lat,$lon) \| [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) \| [$map_name]($map_urll/@/$lat/$lon/16)"
             if [[ ! -z $webhook && $convertFort == "1" ]] ; then discord ;fi
             if [[ ! -z $chatid && $convertFort == "1" ]] ;then pregen=$(sed 's/+/%2B/g' <<< $pregen) && telegram ;fi
           elif [[ $oldimage_url != $image_url ]] ;then
             l2="edit $type image id: $id fence: $fence name: \"$name\""
             username="${type^} image change"
-            description="Name: **$name**\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)"
+            descript="Name: **$name**\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)"
             text="[\u200A]($tileserver_url/staticmap/pregenerated/$pregen)\nName: $name\n\n$address\n[Google](https://www.google.com/maps/search/?api=1%26amp;query=$lat,$lon) \| [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) \| [$map_name]($map_urll/@/$lat/$lon/16)"
             if [[ ! -z $webhook && $editImage == "1" ]] ; then discord ;fi
             if [[ ! -z $chatid && $editImage == "1" ]] ;then pregen=$(sed 's/+/%2B/g' <<< $pregen) && telegram ;fi
           elif [[ $olddescription != $description ]] ;then
             l2="edit $type description id: $id fence: $fence name: \"$name\""
             username="${type^} description change"
-            description="Name: **$name**\nOld: $olddescription\nNew: $description\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)"
+            descript="Name: **$name**\nOld: $olddescription\nNew: $description\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)"
             text="[\u200A]($tileserver_url/staticmap/pregenerated/$pregen)\nName: $name\nOld: $olddescription\nNew: $description\n\n$address\n[Google](https://www.google.com/maps/search/?api=1%26amp;query=$lat,$lon) \| [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) \| [$map_name]($map_urll/@/$lat/$lon/16)"
             if [[ ! -z $webhook && $editDescription == "1" ]] ; then discord ;fi
             if [[ ! -z $chatid && $editDescription == "1" ]] ;then pregen=$(sed 's/+/%2B/g' <<< $pregen) && telegram ;fi
