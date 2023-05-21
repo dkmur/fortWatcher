@@ -45,6 +45,21 @@ if [[ ! -z $fence ]] ;then
     convertFort=$(echo $i | awk -F 'dkmurrie' '{print $11}')
     editNameASadded=$(echo $i | awk -F 'dkmurrie' '{print $12}')
   done
+# Fences added to blissey but not yet in webhooks table
+  if [[ -z $addPortal ]] ;then
+    echo ":angry: mon fence was added to blissey but not to webhooks table, handling as unfenced !!" $folder/logs/fortwatcher.log
+    webhook=$unfenced_webhook
+    chatid=$unfenced_chatid
+    addPortal=1
+    addFort=1
+    editName=1
+    editLocation=1
+    editDescription=0
+    editImage=0
+    removeFort=1
+    convertFort=1
+    editNameASadded=0
+  fi
 else
   webhook=$unfenced_webhook
   chatid=$unfenced_chatid
@@ -75,7 +90,7 @@ fi
 }
 
 get_address(){
-if [[ ! -z $nominatim_url ]] && [[ ! -z $webhook || ! -z $chatid ]] ;then
+if [[ ! -z $nominatim_url ]] ;then
   if [[ $timing == "true" ]] ;then nomstart=$(date '+%Y%m%d %H:%M:%S.%3N') ;fi
   address=$(curl -s "$nominatim_url/reverse?format=jsonv2&lat=$lat&lon=$lon" | jq -r '.address.road + " " + .address.house_number + ", " + .address.town + .address.village + .address.city')
   if [[ $timing == "true" ]] ;then
@@ -86,7 +101,7 @@ fi
 }
 
 get_staticmap(){
-if [[ ! -z $tileserver_url ]] && [[ ! -z $webhook || ! -z $chatid ]] ;then
+if [[ ! -z $tileserver_url ]] ;then
   if [[ $timing == "true" ]] ;then tilestart=$(date '+%Y%m%d %H:%M:%S.%3N') ;fi
   if [[ $type == "pokestop" ]] ;then
     pregen=$(curl -s "$tileserver_url/staticmap/pokemon?lat=$lat&lon=$lon&img=https://raw.githubusercontent.com/nileplumb/PkmnShuffleMap/master/UICONS/pokestop/0.png&pregenerate=true")
