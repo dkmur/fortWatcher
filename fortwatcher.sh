@@ -104,9 +104,9 @@ get_staticmap(){
 if [[ ! -z $tileserver_url ]] ;then
   if [[ $timing == "true" ]] ;then tilestart=$(date '+%Y%m%d %H:%M:%S.%3N') ;fi
   if [[ $type == "pokestop" ]] ;then
-    pregen=$(curl -s "$tileserver_url/staticmap/pokemon?lat=$lat&lon=$lon&img=https://github.com/nileplumb/PkmnShuffleMap/blob/master/UICONS/misc/pokestop.png&pregenerate=true")
+    pregen=$(curl -s "$tileserver_url/staticmap/pokemon?lat=$lat&lon=$lon&img=https://github.com/nileplumb/PkmnShuffleMap/master/UICONS/misc/pokestop.png&pregenerate=true")
   elif [[ $type == "gym" ]] ;then
-    pregen=$(curl -s "$tileserver_url/staticmap/pokemon?lat=$lat&lon=$lon&img=https://github.com/nileplumb/PkmnShuffleMap/blob/master/UICONS/misc/gym.png&pregenerate=true")
+    pregen=$(curl -s "$tileserver_url/staticmap/pokemon?lat=$lat&lon=$lon&img=https://github.com/nileplumb/PkmnShuffleMap/master/UICONS/misc/gym.png&pregenerate=true")
   else
     pregen=$(curl -s "$tileserver_url/staticmap/pokemon?lat=$lat&lon=$lon&img=https://raw.githubusercontent.com/nileplumb/PkmnShuffleMap/master/UICONS/misc/portal.png&pregenerate=true")
   fi
@@ -143,9 +143,9 @@ for i in $1 ;do
       image_url=$(echo $line| jq -r '.old.image_url')
       if [[ $image_url == "null" ]] ;then
         if [[ $type == "pokestop" ]] ;then
-          image_url="https://github.com/nileplumb/PkmnShuffleMap/blob/master/UICONS/misc/pokestop.png"
+          image_url="https://github.com/nileplumb/PkmnShuffleMap/master/UICONS/misc/pokestop.png"
         elif [[ $type == "gym" ]] ;then
-          image_url="https://github.com/nileplumb/PkmnShuffleMap/blob/master/UICONS/misc/gym.png"
+          image_url="https://github.com/nileplumb/PkmnShuffleMap/master/UICONS/misc/gym.png"
         else
           image_url="https://raw.githubusercontent.com/nileplumb/PkmnShuffleMap/master/UICONS/misc/portal.png"
         fi
@@ -186,9 +186,9 @@ for i in $1 ;do
       image_url=$(echo $line| jq -r '.new.image_url')
       if [[ $image_url == "null" ]] ;then
         if [[ $type == "pokestop" ]] ;then
-          image_url="https://github.com/nileplumb/PkmnShuffleMap/blob/master/UICONS/misc/pokestop.png"
+          image_url="https://github.com/nileplumb/PkmnShuffleMap/master/UICONS/misc/pokestop.png"
         elif [[ $type == "gym" ]] ;then
-          image_url="https://github.com/nileplumb/PkmnShuffleMap/blob/master/UICONS/misc/gym.png"
+          image_url="https://github.com/nileplumb/PkmnShuffleMap/master/UICONS/misc/gym.png"
         else
           image_url="https://raw.githubusercontent.com/nileplumb/PkmnShuffleMap/master/UICONS/misc/portal.png"
         fi
@@ -262,9 +262,9 @@ for i in $1 ;do
       image_url=$(echo $line| jq -r '.new.image_url')
       if [[ $image_url == "null" ]] ;then
         if [[ $type == "pokestop" ]] ;then
-          image_url="https://github.com/nileplumb/PkmnShuffleMap/blob/master/UICONS/misc/pokestop.png"
+          image_url="https://github.com/nileplumb/PkmnShuffleMap/master/UICONS/misc/pokestop.png"
         elif [[ $type == "gym" ]] ;then
-          image_url="https://github.com/nileplumb/PkmnShuffleMap/blob/master/UICONS/misc/gym.png"
+          image_url="https://github.com/nileplumb/PkmnShuffleMap/master/UICONS/misc/gym.png"
         else
           image_url="https://raw.githubusercontent.com/nileplumb/PkmnShuffleMap/master/UICONS/misc/portal.png"
         fi
