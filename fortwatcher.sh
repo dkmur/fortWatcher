@@ -250,6 +250,7 @@ for i in $1 ;do
       oldname=$(echo $line| jq -r '.old.name' | sed 's/\"/\\\"/g' | sed 's/\//\\\//g')
       if [[ $oldname == "null" ]] ;then oldname="Unknown" ;fi
       olddescription=$(echo $line| jq -r '.old.description')
+      if [[ $olddescription == "null" ]] ;then olddescription="Unknown" ;fi
       oldimage_url=$(echo $line| jq -r '.old.image_url')
       oldlat=$(echo $line| jq -r '.old.location.lat' | xargs printf "%.*f\n" 6)
       oldlon=$(echo $line| jq -r '.old.location.lon' | xargs printf "%.*f\n" 6)
@@ -259,6 +260,7 @@ for i in $1 ;do
       name=$(echo $line| jq -r '.new.name' | sed 's/\"/\\\"/g' | sed 's/\//\\\//g')
       if [[ $name == "null" ]] ;then name="Unknown" ;fi
       description=$(echo $line| jq -r '.new.description')
+      if [[ $description == "null" ]] ;then description="Unknown" ;fi
       image_url=$(echo $line| jq -r '.new.image_url')
       if [[ $image_url == "null" ]] ;then
         if [[ $type == "pokestop" ]] ;then
@@ -278,88 +280,85 @@ for i in $1 ;do
         if [[ ! -z $webhook ]] || [[ ! -z $chatid ]] ;then
           get_address
           get_staticmap
-          if [[ $timing == "true" ]] ;then hookstart=$(date '+%Y%m%d %H:%M:%S.%3N') ;fi
-          if [[ ! -z $chatid ]] ;then tname=$(echo $name | sed 's/(/\\(/g' | sed 's/)/\\)/g' | sed 's/|/\\|/g') && toldname=$(echo $oldname | sed 's/(/\\(/g' | sed 's/)/\\)/g' | sed 's/|/\\|/g') ;fi
-          color="15237395"
-          avatar="https://cdn.discordapp.com/attachments/657164868969037824/1104477454313197578/770615.png"
-          if [[ $oldname != $name ]] ;then
-            l2="edit $type name id: $id fence: $fence name: \"$name\" oldname: \"$oldname\""
-            if [[ $editNameASadded == "0" ]] ;then
-              username="${type^} name change"
-              descript="Old: $oldname\nNew: **$name**\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)"
-              text="[\u200A]($tileserver_url/staticmap/pregenerated/$tpregen)\nOld: $toldname\nNew: $tname\n\n$address\n[Google](https://www.google.com/maps/search/?api=1%26amp;query=$lat,$lon) \| [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) \| [$map_name]($map_urll/@/$lat/$lon/16)"
-              if [[ ! -z $webhook && $editName == "1" ]] ;then l1="Send" && discord ;else l1="Skipped" ;fi
-              if [[ ! -z $chatid && $editName == "1" ]] ;then l1="Send" && telegram ;else l1="Skipped" ;fi
-            else
-              color="65280"
-              username="New ${type^}"
-              descript="Name: **$name**\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)"
-              text="[\u200A]($tileserver_url/staticmap/pregenerated/$tpregen)\nName: $tname\n\n$address\n[Google](https://www.google.com/maps/search/?api=1%26amp;query=$lat,$lon) \| [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) \| [$map_name]($map_urll/@/$lat/$lon/16)"
-              if [[ ! -z $webhook ]] ;then l1="Send" && discord ;else l1="Skipped" ;fi
-              if [[ ! -z $chatid  ]] ;then l1="Send" && telegram ;else l1="Skipped" ;fi
-            fi
-          elif [[ $oldlat != $lat || $oldlon != $lon ]] ;then
-            l2="edit $type location id: $id fence: $fence name: \"$name\" oldloc: $oldlat,$oldlon"
-            username="${type^} location change"
-            descript="Name: **$name**\nOld: $oldlat,$oldlon\nNew: \`$lat,$lon\`\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)"
-            text="[\u200A]($tileserver_url/staticmap/pregenerated/$tpregen)\nName: $tname\nOld: $oldlat,$oldlon\nNew: $lat,$lon\n\n$address\n[Google](https://www.google.com/maps/search/?api=1%26amp;query=$lat,$lon) \| [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) \| [$map_name]($map_urll/@/$lat/$lon/16)"
-            if [[ ! -z $webhook && $editLocation == "1" ]] ;then l1="Send" && discord ;else l1="Skipped" ;fi
-            if [[ ! -z $chatid && $editLocation == "1" ]] ;then l1="Send" && telegram ;else l1="Skipped" ;fi
-          elif [[ $oldtype != $type ]] ;then
-            l2="edit oldtype conversion name id: $id fence: $fence name: \"$name\" newtype: $type"
-            username="Conversion"
-            descript="Name: **$name**\nOld type: $oldtype\nNew type: **$type**\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)"
-            text="[\u200A]($tileserver_url/staticmap/pregenerated/$tpregen)\nName: $tname\nOld: $oldtype\nNew: $type\n\n$address\n[Google](https://www.google.com/maps/search/?api=1%26amp;query=$lat,$lon) \| [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) \| [$map_name]($map_urll/@/$lat/$lon/16)"
-            if [[ ! -z $webhook && $convertFort == "1" ]] ; then l1="Send" && discord ;else l1="Skipped" ;fi
-            if [[ ! -z $chatid && $convertFort == "1" ]] ;then l1="Send" && telegram ;else l1="Skipped" ;fi
-          elif [[ $oldimage_url != $image_url ]] ;then
-            l2="edit $type image id: $id fence: $fence name: \"$name\""
-            username="${type^} image change"
-            descript="Name: **$name**\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)"
-            text="[\u200A]($tileserver_url/staticmap/pregenerated/$tpregen)\nName: $tname\n\n$address\n[Google](https://www.google.com/maps/search/?api=1%26amp;query=$lat,$lon) \| [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) \| [$map_name]($map_urll/@/$lat/$lon/16)"
-            if [[ ! -z $webhook && $editImage == "1" ]] ; then l1="Send" && discord ;else l1="Skipped" ;fi
-            if [[ ! -z $chatid && $editImage == "1" ]] ;then l1="Send" && telegram ;else l1="Skipped" ;fi
-          elif [[ $olddescription != $description ]] ;then
-            l2="edit $type description id: $id fence: $fence name: \"$name\""
-            username="${type^} description change"
-            descript="Name: **$name**\nOld: $olddescription\nNew: $description\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)"
-            text="[\u200A]($tileserver_url/staticmap/pregenerated/$tpregen)\nName: $tname\nOld: $olddescription\nNew: $description\n\n$address\n[Google](https://www.google.com/maps/search/?api=1%26amp;query=$lat,$lon) \| [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) \| [$map_name]($map_urll/@/$lat/$lon/16)"
-            if [[ ! -z $webhook && $editDescription == "1" ]] ; then l1="Send" && discord ;else l1="Skipped" ;fi
-            if [[ ! -z $chatid && $editDescription == "1" ]] ;then telegram ;fi
-#          elif [[ $oldid != $id ]] ;then
-#            l1="Skipped"
-#            l2="edit $type id id: $id fence: $fence name: \"$name\""
-          else
-            l2="THIS SHOULD NOT HAPPEN, what was edited?"
-            echo $line| jq >> $folder/logs/fortwatcher.log
-          fi
-          if [[ $timing == "true" ]] ;then
-            hookstop=$(date '+%Y%m%d %H:%M:%S.%3N')
-            hookdiff=$(date -d "$hookstop $(date -d "$hookstart" +%s.%N) seconds ago" +%s.%3N)
+        fi
+        if [[ $timing == "true" ]] ;then hookstart=$(date '+%Y%m%d %H:%M:%S.%3N') ;fi
+        color="15237395"
+        avatar="https://cdn.discordapp.com/attachments/657164868969037824/1104477454313197578/770615.png"
+
+        elog=""
+        etitle="("
+        if [[ $oldname != $name ]] ;then
+          elog="Name"
+          if [[ $editName == "1" ]] ;then
+            l1="Send"
+            emessage="Name\nOld: $oldname\nNew: $name"
+            etitle="${etitle}Name"
           fi
         else
-          l1="noHook"
-          if [[ $oldname != $name ]] ;then
-            l2="edit $type name id: $id fence: $fence name: \"$name\" oldname: \"$oldname\""
-          elif [[ $oldlat != $lat || $oldlon != $lon ]] ;then
-            l2="edit $type location id: $id fence: $fence name: \"$name\" oldloc: $oldlat,$oldlon"
-          elif [[ $oldtype != $type ]] ;then
-            l2="edit oldtype conversion name id: $id fence: $fence name: \"$name\" newtype: $type"
-          elif [[ $oldimage_url != $image_url ]] ;then
-            l2="edit $type image id: $id fence: $fence name: \"$name\""
-          elif [[ $olddescription != $description ]] ;then
-            l2="edit $type description id: $id fence: $fence name: \"$name\""
-#          elif [[ $oldid != $id ]] ;then
-#            l2="edit $type id id: $id fence: $fence name: \"$name\""
-          else
-            l2="THIS SHOULD NOT HAPPEN, what was edited?"
-            echo $line| jq >> $folder/logs/fortwatcher.log
+          emessage="Name: $name"
+        fi
+        if [[ $oldlat != $lat || $oldlon != $lon ]] ;then
+          elog="${elog}Location"
+          if [[ $editLocation == "1" ]] ;then
+            l1="Send"
+            emessage="${emessage}\n\nLocation\nOld: $oldlat,$oldlon\nNew: $lat,$lon"
+            etitle="${etitle}Location"
           fi
         fi
-      else
-        l1="Skipped"
-        l2=",all edits disabled"
+        if [[ $oldtype != $type ]] ;then
+          elog="${elog}Conversion"
+          if [[ $convertFort == "1" ]] ;then
+            l1="Send"
+            emessage="${emessage}\n\nConversion\nFrom: $oldtype\nTo: $type"
+            etitle="${etitle}Conversion"
+          fi
+        fi
+        if [[ $oldimage_url != $image_url ]] ;then
+          elog="${elog}Image"
+          if [[ $editImage == "1" ]] ;then
+            l1="Send"
+            etitle="${etitle}Image"
+          fi
+        fi
+        if [[ $olddescription != $description ]] ;then
+          elog="${elog}Description"
+          if [[ $editDescription == "1" ]] ;then
+            l1="Send"
+            emessage="${emessage}\n\nDescription\nOld: $olddescription\nNew: $description"
+            etitle="${etitle}Description"
+          fi
+        fi
+        etitle="${etitle})"
+        etitle=$(echo $etitle | sed 's/\([A-Z]\)/,\1/g' | sed 's/(,/(/g')
+
+        l2="edit $type $elog id: $id fence: $fence name: \"$name\" oldname: \"$oldname\""
+        if [[ $etitle == "()" ]] ;then
+          l1="Skipped"
+        else
+          descript="$emessage\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)"
+          temessage=$(echo $emessage | sed 's/(/\\(/g' | sed 's/)/\\)/g')
+          text="[\u200A]($tileserver_url/staticmap/pregenerated/$tpregen)\n$temessage\n\n$address\n[Google](https://www.google.com/maps/search/?api=1%26amp;query=$lat,$lon) \| [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) \| [$map_name]($map_urll/@/$lat/$lon/16)"
+          if [[ ! -z $webhook ]] || [[ ! -z $chatid ]] ;then
+            if [[ $oldname != $name ]] && [[ $editNameASadded == "1" ]] ;then
+              color="65280"
+              username="New ${type^}"
+              if [[ ! -z $webhook ]] ;then discord ;fi
+              if [[ ! -z $chatid  ]] ;then telegram ;fi
+            else
+              username="Edit ${type^} $etitle"
+              if [[ ! -z $webhook ]] ;then username="Edit ${type^} $etitle" && discord ;fi
+              if [[ ! -z $chatid  ]] ;then tetitle=$(echo $etitle | sed 's/(/\\(/g' | sed 's/)/\\)/g') && username="Edit ${type^} $tetitle" && telegram ;fi
+            fi
+          else
+            if [[ -z $l1 ]] ;then l1="noHook" ;fi
+          fi
+        fi
+        if [[ $timing == "true" ]] ;then
+          hookstop=$(date '+%Y%m%d %H:%M:%S.%3N')
+          hookdiff=$(date -d "$hookstop $(date -d "$hookstart" +%s.%N) seconds ago" +%s.%3N)
+        fi
       fi
+
     else
       echo "THIS SHOULD NOT HAPPEN" >> $folder/logs/fortwatcher.log
       echo $line | jq >> $folder/logs/fortwatcher.log
