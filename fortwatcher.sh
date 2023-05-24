@@ -54,8 +54,8 @@ if [[ ! -z $fence ]] ;then
     addFort=1
     editName=1
     editLocation=1
-    editDescription=0
-    editImage=0
+    editDescription=1
+    editImage=1
     removeFort=1
     convertFort=1
     editNameASadded=0
@@ -68,8 +68,8 @@ else
   addFort=1
   editName=1
   editLocation=1
-  editDescription=0
-  editImage=0
+  editDescription=1
+  editImage=1
   removeFort=1
   convertFort=1
   editNameASadded=0
@@ -183,6 +183,8 @@ for i in $1 ;do
       type=$(echo $line| jq -r '.new.type')
       name=$(echo $line| jq -r '.new.name' | sed 's/\"/\\\"/g' | sed 's/\//\\\//g')
       if [[ $name == "null" ]] ;then name="Unknown" ;fi
+      description=$(echo $line| jq -r '.new.description')
+      if [[ $description == "null" ]] ;then description="Unknown" ;fi
       image_url=$(echo $line| jq -r '.new.image_url')
       if [[ $image_url == "null" ]] ;then
         if [[ $type == "pokestop" ]] ;then
@@ -213,10 +215,12 @@ for i in $1 ;do
           get_staticmap
           if [[ $timing == "true" ]] ;then hookstart=$(date '+%Y%m%d %H:%M:%S.%3N') ;fi
           if [[ -z $l1 ]] ;then l1="Send" ;fi
-          if [[ ! -z $chatid ]] ;then tname=$(echo $name | sed 's/(/\\(/g' | sed 's/)/\\)/g') ;fi
+          amessage="Name: $name"
+          if [[ $editDescription == "1" ]] ;then amessage="${amessage}\n\nDescription:\n$description" ;fi
+          tamessage=$(echo $amessage | sed 's/(/\\(/g' | sed 's/)/\\)/g')
           username="${change_type^} ${type^}"
           descript="Name: **$name**\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)"
-          text="[\u200A]($tileserver_url/staticmap/pregenerated/$tpregen)\nName: $tname\n\n$address\n[Google](https://www.google.com/maps/search/?api=1%26amp;query=$lat,$lon) \| [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) \| [$map_name]($map_urll/@/$lat/$lon/16)"
+          text="[\u200A]($tileserver_url/staticmap/pregenerated/$tpregen)\n$tamessage\n[Google](https://www.google.com/maps/search/?api=1%26amp;query=$lat,$lon) \| [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) \| [$map_name]($map_urll/@/$lat/$lon/16)"
           if [[ $type == "portal" ]] ;then
             color="12609532"
             avatar="https://raw.githubusercontent.com/nileplumb/PkmnShuffleMap/master/UICONS/misc/portal.png"
