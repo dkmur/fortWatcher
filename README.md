@@ -37,5 +37,5 @@ types = ["fort_update"]
     ]
 }
 ```
-- fire it up like `pm2 start fortwatcher.sh --name fortWatcher`
-- after first start blisseydb table webhooks will be created. Add your mon area/fence names with their respective discord channel webhook and/or telegram chatid.
+- fire it up like `pm2 start fortwatcher.sh --name fortwatcher`
+- after first start blisseydb table webhooks will be created. Add your mon area/fence names with at least their respective discord channel webhook and/or telegram chatid. Optionally adjust: addPortal,addFort,editName,editLocation,editDescription,editImage,removeFort,convertFort,editNameASadded(ignores `added` fort message and will send added message at `edit name`). 
