@@ -15,6 +15,7 @@ unfenced_chatid=""					# telegram chat id for unfenced portals/forts
 timing=false                                            # write more detailed timings to timing.log
 ignore_existing_portal=true                             # ignore reported new portals already in db as stop/gym
 write_raw=false                                         # write received webhooks to raw.log
+write_stats=false                                       # write processing to table stats_forts
 
 ## urls
 map_name=MyMap
