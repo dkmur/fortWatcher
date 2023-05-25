@@ -153,11 +153,10 @@ for i in $1 ;do
       lat=$(echo $line| jq -r '.old.location.lat' | xargs printf "%.*f\n" 6)
       lon=$(echo $line| jq -r '.old.location.lon' | xargs printf "%.*f\n" 6)
       get_monfence
-      l2="removed $type id: $id location: $lat,$lon fence: $fence name: \"$name\""
+      l2="removed $type id: $id fence: $fence name: \"$name\""
       if [[ $removeFort == "1" ]] ;then
         if [[ ! -z $webhook ]] || [[ ! -z $chatid ]] ;then
-          get_address
-          get_staticmap
+          get_address && get_staticmap
           if [[ $timing == "true" ]] ;then hookstart=$(date '+%Y%m%d %H:%M:%S.%3N') ;fi
           l1="Send"
           if [[ ! -z $chatid ]] ;then tname=$(echo $name | sed 's/(/\\(/g' | sed 's/)/\\)/g') ;fi
@@ -176,7 +175,7 @@ for i in $1 ;do
           l1="noHook"
         fi
       else
-        l1="Skipped"
+        l1="Skip"
       fi
     elif [[ $change_type == "new" ]] ;then
       id=$(echo $line| jq -r '.new.id')
@@ -198,29 +197,28 @@ for i in $1 ;do
       lat=$(echo $line| jq -r '.new.location.lat' | xargs printf "%.*f\n" 6)
       lon=$(echo $line| jq -r '.new.location.lon' | xargs printf "%.*f\n" 6)
       get_monfence
-      l2="added $type id: $id location: $lat,$lon fence: $fence name: \"$name\""
+      l2="added $type id: $id fence: $fence name: \"$name\""
 
       if [[ $ignore_existing_portal == "true" && $type == "portal" ]] ;then
         exists=$(query "select count(id) from (select id from $golbatdb.pokestop where id='$id' union all select id from $golbatdb.gym where id='$id') t group by id;")
         if [[ ! -z $exists ]] ;then
           webhook=""
           chatid=""
-          l1="Skipped"
+          l1="Skip"
         fi
       fi
 
       if [[ $addPortal  == "1" || $addFort = "1" ]] ;then
         if [[ ! -z $webhook ]] || [[ ! -z $chatid ]] ;then
-          get_address
-          get_staticmap
+          get_address && get_staticmap
           if [[ $timing == "true" ]] ;then hookstart=$(date '+%Y%m%d %H:%M:%S.%3N') ;fi
           if [[ -z $l1 ]] ;then l1="Send" ;fi
           amessage="Name: $name"
           if [[ $editDescription == "1" ]] ;then amessage="${amessage}\n\nDescription:\n$description" ;fi
           tamessage=$(echo $amessage | sed 's/(/\\(/g' | sed 's/)/\\)/g')
           username="${change_type^} ${type^}"
-          descript="Name: **$name**\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)"
-          text="[\u200A]($tileserver_url/staticmap/pregenerated/$tpregen)\n$tamessage\n[Google](https://www.google.com/maps/search/?api=1%26amp;query=$lat,$lon) \| [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) \| [$map_name]($map_urll/@/$lat/$lon/16)"
+          descript="$amessage\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)"
+          text="[\u200A]($tileserver_url/staticmap/pregenerated/$tpregen)\n$tamessage\n\n$address\n[Google](https://www.google.com/maps/search/?api=1%26amp;query=$lat,$lon) \| [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) \| [$map_name]($map_urll/@/$lat/$lon/16)"
           if [[ $type == "portal" ]] ;then
             color="12609532"
             avatar="https://raw.githubusercontent.com/nileplumb/PkmnShuffleMap/master/UICONS/misc/portal.png"
@@ -233,7 +231,7 @@ for i in $1 ;do
               if [[ ! -z $webhook && $addFort == "1" ]] ;then discord ;fi
               if [[ ! -z $chatid && $addFort == "1" ]] ;then telegram ;fi
             else
-              l1="Skipped"
+              l1="Skip"
             fi
           fi
           if [[ $timing == "true" ]] ;then
@@ -244,7 +242,7 @@ for i in $1 ;do
           if [[ -z $l1 ]] ;then l1="noHook" ;fi
         fi
       else
-        l1="Skipped"
+        l1="Skip"
       fi
     elif [[ $change_type == "edit" ]] ;then
       edit_types=$(echo $line| jq -r '.edit_types')
@@ -281,18 +279,14 @@ for i in $1 ;do
       get_monfence
 
       if [[ $editName == "1" || $editLocation == "1" || $editImage == "1" || $editDescription == "1" || $convertFort == "1" ]] ;then
-        if [[ ! -z $webhook ]] || [[ ! -z $chatid ]] ;then
-          get_address
-          get_staticmap
-        fi
+        if [[ ! -z $webhook ]] || [[ ! -z $chatid ]] ;then get_address && get_staticmap ;fi
         if [[ $timing == "true" ]] ;then hookstart=$(date '+%Y%m%d %H:%M:%S.%3N') ;fi
         color="15237395"
         avatar="https://cdn.discordapp.com/attachments/657164868969037824/1104477454313197578/770615.png"
 
-        elog=""
-        etitle="("
+        elog="(" && etitle="("
         if [[ $oldname != $name ]] ;then
-          elog="Name"
+          elog="${elog}Name"
           if [[ $editName == "1" ]] ;then
             l1="Send"
             emessage="Name\nOld: $oldname\nNew: $name"
@@ -332,12 +326,12 @@ for i in $1 ;do
             etitle="${etitle}Description"
           fi
         fi
-        etitle="${etitle})"
-        etitle=$(echo $etitle | sed 's/\([A-Z]\)/,\1/g' | sed 's/(,/(/g')
+        etitle="${etitle})" && etitle=$(echo $etitle | sed 's/\([A-Z]\)/,\1/g' | sed 's/(,/(/g')
+        elog="${elog})" && elog=$(echo $elog | sed 's/\([A-Z]\)/,\1/g' | sed 's/(,/(/g')
 
-        l2="edit $type $elog id: $id fence: $fence name: \"$name\" oldname: \"$oldname\""
+        l2="edit $type id: $id fence: $fence name: \"$name\""
         if [[ $etitle == "()" ]] ;then
-          l1="Skipped"
+          l1="Skip"
         else
           descript="$emessage\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)"
           temessage=$(echo $emessage | sed 's/(/\\(/g' | sed 's/)/\\)/g')
@@ -369,7 +363,7 @@ for i in $1 ;do
     fi
     totstop=$(date '+%Y%m%d %H:%M:%S.%3N')
     totdiff=$(date -d "$totstop $(date -d "$totstart" +%s.%N) seconds ago" +%s.%3N)
-    echo "[$(date '+%Y%m%d %H:%M:%S')] $l1 $l2 time: $totdiff s" >> $folder/logs/fortwatcher.log
+    echo "[$(date '+%Y%m%d %H:%M:%S')] $l1 $l2 time: ${totdiff}s $elog" >> $folder/logs/fortwatcher.log
 
     if [[ $timing == "true" ]] ;then
       echo "[$(date '+%Y%m%d %H:%M:%S.%3N')] $id Total $totdiff sql $sqldiff nominatim $nomdiff tileserver $tilediff webhook $hookdiff" >> $folder/logs/timing.log
