@@ -343,23 +343,21 @@ for i in $1 ;do
         l2="edit $type id: $id fence: $fence name: \"$name\""
         if [[ $etitle == "()" ]] ;then
           l1="Skip" && Sskip=1
+        elif [[ -z $webhook ]] && [[ -z $chatid ]] ;then
+          l1="noHook" && Snohook=1
         else
           descript="$emessage\n\n$address\n[Google](https://www.google.com/maps/search/?api=1&query=$lat,$lon) | [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) | [$map_name]($map_urll/@/$lat/$lon/16)"
           temessage=$(echo $emessage | sed 's/(/\\(/g' | sed 's/)/\\)/g')
           text="[\u200A]($tileserver_url/staticmap/pregenerated/$tpregen)\n$temessage\n\n$address\n[Google](https://www.google.com/maps/search/?api=1%26amp;query=$lat,$lon) \| [Apple](https://maps.apple.com/maps?daddr=$lat,$lon) \| [$map_name]($map_urll/@/$lat/$lon/16)"
-          if [[ ! -z $webhook ]] || [[ ! -z $chatid ]] ;then
-            if [[ $oldname != $name ]] && [[ $editNameASadded == "1" ]] ;then
-              color="65280"
-              username="New ${type^}"
-              if [[ ! -z $webhook ]] ;then discord ;fi
-              if [[ ! -z $chatid  ]] ;then telegram ;fi
-            else
-              username="Edit ${type^} $etitle"
-              if [[ ! -z $webhook ]] ;then username="Edit ${type^} $etitle" && discord ;fi
-              if [[ ! -z $chatid  ]] ;then tetitle=$(echo $etitle | sed 's/(/\\(/g' | sed 's/)/\\)/g') && username="Edit ${type^} $tetitle" && telegram ;fi
-            fi
+          if [[ $oldname != $name ]] && [[ $editNameASadded == "1" ]] ;then
+            color="65280"
+            username="New ${type^}"
+            if [[ ! -z $webhook ]] ;then discord ;fi
+            if [[ ! -z $chatid  ]] ;then telegram ;fi
           else
-            if [[ -z $l1 ]] ;then l1="noHook" && Snohook=1 ;fi
+            username="Edit ${type^} $etitle"
+            if [[ ! -z $webhook ]] ;then username="Edit ${type^} $etitle" && discord ;fi
+            if [[ ! -z $chatid  ]] ;then tetitle=$(echo $etitle | sed 's/(/\\(/g' | sed 's/)/\\)/g') && username="Edit ${type^} $tetitle" && telegram ;fi
           fi
         fi
         if [[ $timing == "true" ]] ;then
