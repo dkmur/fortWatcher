@@ -187,7 +187,7 @@ for i in $1 ;do
       type=$(echo $line| jq -r '.new.type')
       name=$(echo $line| jq -r '.new.name' | sed 's/\"/\\\"/g' | sed 's/\//\\\//g')
       if [[ $name == "null" ]] ;then name="Unknown" ;fi
-      description=$(echo $line| jq -r '.new.description')
+      description=$(echo $line| jq -r '.new.description' | sed 's/\"/\\\"/g' | sed 's/\//\\\//g')
       if [[ $description == "null" ]] ;then description="Unknown" ;fi
       image_url=$(echo $line| jq -r '.new.image_url')
       if [[ $image_url == "null" ]] ;then
@@ -257,7 +257,7 @@ for i in $1 ;do
       oldtype=$(echo $line| jq -r '.old.type')
       oldname=$(echo $line| jq -r '.old.name' | sed 's/\"/\\\"/g' | sed 's/\//\\\//g')
       if [[ $oldname == "null" ]] ;then oldname="Unknown" ;fi
-      olddescription=$(echo $line| jq -r '.old.description')
+      olddescription=$(echo $line| jq -r '.old.description' | sed 's/\"/\\\"/g' | sed 's/\//\\\//g')
       if [[ $olddescription == "null" ]] ;then olddescription="Unknown" ;fi
       oldimage_url=$(echo $line| jq -r '.old.image_url')
       oldlat=$(echo $line| jq -r '.old.location.lat' | xargs printf "%.*f\n" 6)
@@ -267,7 +267,7 @@ for i in $1 ;do
       type=$(echo $line| jq -r '.new.type')
       name=$(echo $line| jq -r '.new.name' | sed 's/\"/\\\"/g' | sed 's/\//\\\//g')
       if [[ $name == "null" ]] ;then name="Unknown" ;fi
-      description=$(echo $line| jq -r '.new.description')
+      description=$(echo $line| jq -r '.new.description' | sed 's/\"/\\\"/g' | sed 's/\//\\\//g')
       if [[ $description == "null" ]] ;then description="Unknown" ;fi
       image_url=$(echo $line| jq -r '.new.image_url')
       if [[ $image_url == "null" ]] ;then
