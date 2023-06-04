@@ -3,16 +3,6 @@
 folder="$(pwd)"
 source $folder/config.ini
 
-## Logging
-mkdir -p $folder/logs
-# rename log
-if [[ -f $folder/logs/stops.log ]] ;then mv $folder/logs/stops.log $folder/logs/fortwatcher.log ;fi
-# log start
-echo "[$(date '+%Y%m%d %H:%M:%S')] fortwatcher (re)started" >> $folder/logs/fortwatcher.log
-# stderr to logfile
-exec 2>> $folder/logs/fortwatcher.log
-
-
 ## functions
 if [[ -z $sqlpass ]] ;then
   query(){
@@ -135,7 +125,7 @@ for i in $1 ;do
     Sreceive=0 && Sstopremove=0 && Sgymremove=0 && Ssend=0 && Snohook=0 && Sskip=0 && Sstopadd=0 && Sgymadd=0 && Sportaladd=0 && Snamedit=0 && Slocedit=0 && Sconvert=0 && Simageedit=0 && Sdescedit=0
     Sreceive=1
     if [[ $write_raw == "true" ]] ;then
-      echo $totstart >> $folder/logs/raw.log
+      echo "[$totstart] processing started" >> $folder/logs/raw.log
       echo $line | jq >> $folder/logs/raw.log
     fi
     change_type=$(echo $line| jq -r '.change_type')
@@ -384,12 +374,27 @@ done
 
 ## execution
 
+## Logging
+mkdir -p $folder/logs
+# rename log
+if [[ -f $folder/logs/stops.log ]] ;then mv $folder/logs/stops.log $folder/logs/fortwatcher.log ;fi
+# log start
+echo "[$(date '+%Y%m%d %H:%M:%S')] fortwatcher (re)started" >> $folder/logs/fortwatcher.log
+# stderr to logfile
+exec 2>> $folder/logs/fortwatcher.log
+
 # create table wehooks
 query "CREATE TABLE IF NOT EXISTS webhooks (area varchar(40) NOT NULL,fence varchar(40) DEFAULT Area,webhook varchar(150),subdomain varchar(20)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
 # table updates webhooks
 query "alter table webhooks add column if not exists subdomain varchar(40), add column if not exists chatid varchar(40), add column if not exists addPortal tinyint(1) default 1, add column if not exists addFort tinyint(1) default 1, add column if not exists editName tinyint(1) default 1, add column if not exists editLocation tinyint(1) default 1, add column if not exists editDescription tinyint(1) default 0, add column if not exists editImage tinyint(1) default 0, add column if not exists removeFort tinyint(1) default 1, add column if not exists convertFort tinyint(1) default 1, add column if not exists editNameASadded tinyint(1) default 0;"
 # create table stats_forts
 query "CREATE TABLE IF NOT EXISTS stats_forts (datetime datetime NOT NULL,rpl smallint(6) NOT NULL,area varchar(40) NOT NULL,fence varchar(40) DEFAULT Area,webhook_received int DEFAULT 0,webhook_send int DEFAULT 0,webhook_skip int DEFAULT 0,webhook_nohook int DEFAULT 0,stop_remove int DEFAULT 0,gym_remove int DEFAULT 0,fort_conversion int DEFAULT 0,portal_add int DEFAULT 0,stop_add int DEFAULT 0,gym_add int DEFAULT 0,name_edit int DEFAULT 0,location_edit int DEFAULT 0,image_edit int DEFAULT 0,description_edit int DEFAULT 0,PRIMARY KEY (datetime,rpl,area,fence)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+
+# checks
+if [[ -z $(which curl) ]] ;then echo "[$(date '+%Y%m%d %H:%M:%S')] curl not installed, exit script" >> $folder/logs/fortwatcher.log && exit ;fi
+if [[ -z $(which ncat) ]] ;then echo "[$(date '+%Y%m%d %H:%M:%S')] ncat not installed, exit script" >> $folder/logs/fortwatcher.log && exit ;fi
+if [[ -z $(which jq) ]] ;then echo "[$(date '+%Y%m%d %H:%M:%S')] jq not installed, exit script" >> $folder/logs/fortwatcher.log && exit ;fi
+if [[ -z $(which ts) ]] ;then echo "[$(date '+%Y%m%d %H:%M:%S')] ts (moreutils) not installed, exit script" >> $folder/logs/fortwatcher.log && exit ;fi
 
 # set telegram loglevel
 if [[ $telegram_verbose_logging == "true" ]] ;then verbose="--verbose " ;fi
@@ -399,5 +404,5 @@ while true ;do
   if [[ $timing == "true" ]] ;then echo "[$(date '+%Y%m%d %H:%M:%S.%3N')] Main loop" >> $folder/logs/timing.log ;fi
   while read -r line ;do
     process $line &
-  done < <(ncat -l $receiver_port < response.txt | grep { | jq -c '.[] | .message')
+  done < <(ncat -l -p $receiver_port -i 100ms 2> /dev/null | if [[ $write_raw == "true" ]] ;then tee >(ts '[%Y%m%d %H:%M:%.S]' >> $folder/logs/raw.log) | grep { | jq -c '.[] | .message' && echo "" >> $folder/logs/raw.log ;else grep { | jq -c '.[] | .message' ;fi)
 done

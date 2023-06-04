@@ -7,8 +7,7 @@
 Webhook receiver for Golbat(fort_update) and intelwatcher(new portals).  
 Updates will be mapped to blisseydb mon area fences and discord/telegram notification send.
 
-- install jq
-- install ncat
+- install curl, jq, ncat, moreutils
 - copy config and fill it out
 - add golbat webhook:  
 ```
