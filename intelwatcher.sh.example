@@ -46,17 +46,38 @@ $python_interpreter intel_watcher.py
 
 # process changes
 echo "[$(date '+%Y%m%d %H:%M:%S')] sending hooks" >> $logfile
+counter=0
+data=""
 while read -r line ;do
   name=$(echo $line | awk -F 'dkmurrie' '{print $1}' | sed 's/\"/\\\"/g')
   lat=$(echo $line | awk -F 'dkmurrie' '{print $2}')
   lon=$(echo $line | awk -F 'dkmurrie' '{print $3}')
   url=$(echo $line | awk -F 'dkmurrie' '{print $4}')
   id=$(echo $line | awk -F 'dkmurrie' '{print $5}')
+  counter=$((counter+1))
+
+  if [[ -z $data ]] ;then
+    data="{\"type\": \"portal_update\", \"message\": {\"change_type\": \"new\", \"new\":{\"type\":\"portal\", \"id\":\"$id\", \"name\":\"$name\", \"image_url\":\"$url\", \"location\": {\"lat\":$lat, \"lon\":$lon}}}}"
+  else
+    data="${data},{\"type\": \"portal_update\", \"message\": {\"change_type\": \"new\", \"new\":{\"type\":\"portal\", \"id\":\"$id\", \"name\":\"$name\", \"image_url\":\"$url\", \"location\": {\"lat\":$lat, \"lon\":$lon}}}}"
+  fi
 
 # send webhooks
-  echo "[$(date '+%Y%m%d %H:%M:%S')] sending hook $id $lat,$lon $name" >> $logfile
-  curl -sSk -X POST $fortwatcher_url -H "Accept: application/json" -H "Content-Type: application/json" -d "[{\"type\": \"portal_update\", \"message\": {\"change_type\": \"new\", \"new\":{\"type\":\"portal\", \"id\":\"$id\", \"name\":\"$name\", \"image_url\":\"$url\", \"location\": {\"lat\":$lat, \"lon\":$lon}}}}]"
-  sleep 1s
+  if (( $counter > 49 )) ;then
+    echo "[$(date '+%Y%m%d %H:%M:%S')] sending $counter webhooks" >> $logfile
+    data=$(echo $data | sed "s/^/\[/" | sed "s/$/\]/")
+    curl -sSk -X POST $fortwatcher_url -H "Expect:" -H "Accept: application/json" -H "Content-Type: application/json" -d "$data"
+    sleep 2s
+    counter=0
+    data=""
+  fi
 done < <(query "select name,lat,lon,url,external_id from ingress_portals where id not in (select id from ingress_portals_old);" | sed 's/\t/dkmurrie/g')
+
+# send remaining hooks
+if [[ ! -z $data ]] ;then
+  echo "[$(date '+%Y%m%d %H:%M:%S')] sending $counter webhooks" >> $logfile
+  data=$(echo $data | sed "s/^/\[/" | sed "s/$/\]/")
+  curl -sSk -X POST $fortwatcher_url -H "Expect:" -H "Accept: application/json" -H "Content-Type: application/json" -d "$data"
+fi
 
 echo "[$(date '+%Y%m%d %H:%M:%S')] all done!" >> $logfile
