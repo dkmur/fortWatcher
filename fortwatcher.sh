@@ -38,7 +38,7 @@ if [[ ! -z $fence ]] ;then
   done
 # Fences added to blissey but not yet in webhooks table
   if [[ -z $addPortal ]] ;then
-    echo "[$(date '+%Y%m%d %H:%M:%S')] mon fence was added to blissey but not to webhooks table, handling as unfenced !!" >> $folder/logs/fortwatcher.log
+    echo "[$(date '+%Y%m%d %H:%M:%S')] mon fence was added to blissey but not to webhooks table, handling as unfenced !!" >> $folder/logs/fortwatcher_$(date '+%Y%m%d').log
     webhook=$unfenced_webhook
     chatid=$unfenced_chatid
     addPortal=1
@@ -103,7 +103,7 @@ if [[ ! -z $tileserver_url ]] ;then
     pregen=$(curl -s "$tileserver_url/staticmap/pokemon?lat=$lat&lon=$lon&img=https://raw.githubusercontent.com/nileplumb/PkmnShuffleMap/master/UICONS/misc/portal.png&pregenerate=true")
   fi
   if [[ ! -z $chatid ]] ;then tpregen=$(sed 's/+/%2B/g' <<< $pregen) ;fi
-  if [[ $write_raw == "true" ]] ;then echo "$id $pregen" >> $folder/logs/raw.log ;fi
+  if [[ $write_raw == "true" ]] ;then echo "$id $pregen" >> $folder/logs/raw_$(date '+%Y%m%d').log ;fi
   if [[ $timing == "true" ]] ;then
     tilestop=$(date '+%Y%m%d %H:%M:%S.%3N')
     tilediff=$(date -d "$tilestop $(date -d "$tilestart" +%s.%N) seconds ago" +%s.%3N)
@@ -112,11 +112,11 @@ fi
 }
 
 discord(){
-cd $folder && ./discord.sh --username "$username" --color "$color" --avatar "$avatar" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --footer "Fence: $fence Location: $lat,$lon" --description "$descript" >> $folder/logs/fortwatcher.log
+cd $folder && ./discord.sh --username "$username" --color "$color" --avatar "$avatar" --thumbnail "$image_url" --image "$tileserver_url/staticmap/pregenerated/$pregen" --webhook-url "$webhook" --footer "Fence: $fence Location: $lat,$lon" --description "$descript" >> $folder/logs/fortwatcher_$(date '+%Y%m%d').log
 }
 
 telegram(){
-cd $folder && ./telegram.sh $verbose --chatid $chatid --bottoken $telegram_token --title "$username" --text "$text" >> $folder/logs/fortwatcher.log
+cd $folder && ./telegram.sh $verbose --chatid $chatid --bottoken $telegram_token --title "$username" --text "$text" >> $folder/logs/fortwatcher_$(date '+%Y%m%d').log
 }
 
 process(){
@@ -125,8 +125,8 @@ for i in $1 ;do
     Sreceive=0 && Sstopremove=0 && Sgymremove=0 && Ssend=0 && Snohook=0 && Sskip=0 && Sstopadd=0 && Sgymadd=0 && Sportaladd=0 && Snamedit=0 && Slocedit=0 && Sconvert=0 && Simageedit=0 && Sdescedit=0
     Sreceive=1
     if [[ $write_raw == "true" ]] ;then
-      echo "[$totstart] processing started" >> $folder/logs/raw.log
-      echo $line | jq >> $folder/logs/raw.log
+      echo "[$totstart] processing started" >> $folder/logs/raw_$(date '+%Y%m%d').log
+      echo $line | jq >> $folder/logs/raw_$(date '+%Y%m%d').log
     fi
     change_type=$(echo $line| jq -r '.change_type')
 
@@ -357,15 +357,15 @@ for i in $1 ;do
       fi
 
     else
-      echo "THIS SHOULD NOT HAPPEN" >> $folder/logs/fortwatcher.log
-      echo $line | jq >> $folder/logs/fortwatcher.log
+      echo "THIS SHOULD NOT HAPPEN" >> $folder/logs/fortwatcher_$(date '+%Y%m%d').log
+      echo $line | jq >> $folder/logs/fortwatcher_$(date '+%Y%m%d').log
     fi
     totstop=$(date '+%Y%m%d %H:%M:%S.%3N')
     totdiff=$(date -d "$totstop $(date -d "$totstart" +%s.%N) seconds ago" +%s.%3N)
-    echo "[$(date '+%Y%m%d %H:%M:%S')] $l1 $l2 time: ${totdiff}s $elog" >> $folder/logs/fortwatcher.log
+    echo "[$(date '+%Y%m%d %H:%M:%S')] $l1 $l2 time: ${totdiff}s $elog" >> $folder/logs/fortwatcher_$(date '+%Y%m%d').log
 
     if [[ $timing == "true" ]] ;then
-      echo "[$(date '+%Y%m%d %H:%M:%S.%3N')] $id Total $totdiff sql $sqldiff nominatim $nomdiff tileserver $tilediff webhook $hookdiff" >> $folder/logs/timing.log
+      echo "[$(date '+%Y%m%d %H:%M:%S.%3N')] $id Total $totdiff sql $sqldiff nominatim $nomdiff tileserver $tilediff webhook $hookdiff" >> $folder/logs/timing_$(date '+%Y%m%d').log
     fi
 
     if [[ $write_stats == "true" ]] ;then query "INSERT INTO stats_forts (datetime,rpl,area,fence,webhook_received,webhook_send,webhook_skip,webhook_nohook,stop_remove,gym_remove,fort_conversion,portal_add,stop_add,gym_add,name_edit,location_edit,image_edit,description_edit) VALUES (concat(date(now() - interval 0 minute),' ', (SEC_TO_TIME((TIME_TO_SEC(time(now() - interval 0 minute)) DIV 900) * 900))),15,'$area','$fence',$Sreceive,$Ssend,$Sskip,$Snohook,$Sstopremove,$Sgymremove,$Sconvert,$Sportaladd,$Sstopadd,$Sgymadd,$Snamedit,$Slocedit,$Simageedit,$Sdescedit) ON DUPLICATE KEY UPDATE webhook_received=webhook_received+VALUES(webhook_received),webhook_send=webhook_send+VALUES(webhook_send),webhook_skip=webhook_skip+VALUES(webhook_skip),webhook_nohook=webhook_nohook+VALUES(webhook_nohook),stop_remove=stop_remove+VALUES(stop_remove),gym_remove=gym_remove+VALUES(gym_remove),fort_conversion=fort_conversion+VALUES(fort_conversion),portal_add=portal_add+VALUES(portal_add),stop_add=stop_add+VALUES(stop_add),gym_add=gym_add+VALUES(gym_add),name_edit=name_edit+VALUES(name_edit),location_edit=location_edit+VALUES(location_edit),image_edit=image_edit+VALUES(image_edit),description_edit=description_edit+VALUES(description_edit);" ;fi
@@ -376,12 +376,10 @@ done
 
 ## Logging
 mkdir -p $folder/logs
-# rename log
-if [[ -f $folder/logs/stops.log ]] ;then mv $folder/logs/stops.log $folder/logs/fortwatcher.log ;fi
 # log start
-echo "[$(date '+%Y%m%d %H:%M:%S')] fortwatcher (re)started" >> $folder/logs/fortwatcher.log
+echo "[$(date '+%Y%m%d %H:%M:%S')] fortwatcher (re)started" >> $folder/logs/fortwatcher_$(date '+%Y%m%d').log
 # stderr to logfile
-exec 2>> $folder/logs/fortwatcher.log
+exec 2>> $folder/logs/fortwatcher_$(date '+%Y%m%d').log
 
 # create table wehooks
 query "CREATE TABLE IF NOT EXISTS webhooks (area varchar(40) NOT NULL,fence varchar(40) DEFAULT Area,webhook varchar(150),subdomain varchar(20)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
@@ -391,18 +389,18 @@ query "alter table webhooks add column if not exists subdomain varchar(40), add 
 query "CREATE TABLE IF NOT EXISTS stats_forts (datetime datetime NOT NULL,rpl smallint(6) NOT NULL,area varchar(40) NOT NULL,fence varchar(40) DEFAULT Area,webhook_received int DEFAULT 0,webhook_send int DEFAULT 0,webhook_skip int DEFAULT 0,webhook_nohook int DEFAULT 0,stop_remove int DEFAULT 0,gym_remove int DEFAULT 0,fort_conversion int DEFAULT 0,portal_add int DEFAULT 0,stop_add int DEFAULT 0,gym_add int DEFAULT 0,name_edit int DEFAULT 0,location_edit int DEFAULT 0,image_edit int DEFAULT 0,description_edit int DEFAULT 0,PRIMARY KEY (datetime,rpl,area,fence)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
 
 # checks
-if [[ -z $(which curl) ]] ;then echo "[$(date '+%Y%m%d %H:%M:%S')] curl not installed, exit script" >> $folder/logs/fortwatcher.log && exit ;fi
-if [[ -z $(which ncat) ]] ;then echo "[$(date '+%Y%m%d %H:%M:%S')] ncat not installed, exit script" >> $folder/logs/fortwatcher.log && exit ;fi
-if [[ -z $(which jq) ]] ;then echo "[$(date '+%Y%m%d %H:%M:%S')] jq not installed, exit script" >> $folder/logs/fortwatcher.log && exit ;fi
-if [[ -z $(which ts) ]] ;then echo "[$(date '+%Y%m%d %H:%M:%S')] ts (moreutils) not installed, exit script" >> $folder/logs/fortwatcher.log && exit ;fi
+if [[ -z $(which curl) ]] ;then echo "[$(date '+%Y%m%d %H:%M:%S')] curl not installed, exit script" >> $folder/logs/fortwatcher_$(date '+%Y%m%d').log && exit ;fi
+if [[ -z $(which ncat) ]] ;then echo "[$(date '+%Y%m%d %H:%M:%S')] ncat not installed, exit script" >> $folder/logs/fortwatcher_$(date '+%Y%m%d').log && exit ;fi
+if [[ -z $(which jq) ]] ;then echo "[$(date '+%Y%m%d %H:%M:%S')] jq not installed, exit script" >> $folder/logs/fortwatcher_$(date '+%Y%m%d').log && exit ;fi
+if [[ -z $(which ts) ]] ;then echo "[$(date '+%Y%m%d %H:%M:%S')] ts (moreutils) not installed, exit script" >> $folder/logs/fortwatcher_$(date '+%Y%m%d').log && exit ;fi
 
 # set telegram loglevel
 if [[ $telegram_verbose_logging == "true" ]] ;then verbose="--verbose " ;fi
 
 # start receiver and process
 while true ;do
-  if [[ $timing == "true" ]] ;then echo "[$(date '+%Y%m%d %H:%M:%S.%3N')] Main loop" >> $folder/logs/timing.log ;fi
+  if [[ $timing == "true" ]] ;then echo "[$(date '+%Y%m%d %H:%M:%S.%3N')] Main loop" >> $folder/logs/timing_$(date '+%Y%m%d').log ;fi
   while read -r line ;do
     process $line &
-  done < <(ncat -l -p $receiver_port -i 100ms 2> /dev/null | if [[ $write_raw == "true" ]] ;then tee >(ts '[%Y%m%d %H:%M:%.S]' >> $folder/logs/raw.log) | grep { | jq -c '.[] | .message' && echo "" >> $folder/logs/raw.log ;else grep { | jq -c '.[] | .message' ;fi)
+  done < <(ncat -l -p $receiver_port -i 100ms 2> /dev/null | if [[ $write_raw == "true" ]] ;then tee >(ts '[%Y%m%d %H:%M:%.S]' >> $folder/logs/raw_$(date '+%Y%m%d').log) | grep { | jq -c '.[] | .message' && echo "" >> $folder/logs/raw_$(date '+%Y%m%d').log ;else grep { | jq -c '.[] | .message' ;fi)
 done
